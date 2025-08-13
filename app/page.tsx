@@ -27,21 +27,24 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { useIsMobile } from "@/hooks/use-mobile";
-
-interface TableData {
-  headers: string[];
-  rows: string[][];
-}
+import type { TableData, EditingCell, ExportFormat } from "@/types/tablio";
+import { parseClipboardData, parseCSVFile } from "@/utils/data-parsers";
+import { formatTableData } from "@/utils/export-formatters";
+import {
+  addRowToTable,
+  removeRowFromTable,
+  addColumnToTable,
+  removeColumnFromTable,
+  updateTableCell,
+  getTableStats,
+} from "@/utils/table-operations";
 
 export default function TablioApp() {
   const [tableData, setTableData] = useState<TableData | null>(null);
   const [fileName, setFileName] = useState("tablio-export");
-  const [format, setFormat] = useState("xlsx");
+  const [format, setFormat] = useState<ExportFormat>("xlsx");
   const [isDragOver, setIsDragOver] = useState(false);
-  const [editingCell, setEditingCell] = useState<{
-    row: number;
-    col: number;
-  } | null>(null);
+  const [editingCell, setEditingCell] = useState<EditingCell | null>(null);
   const [editValue, setEditValue] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
@@ -51,50 +54,14 @@ export default function TablioApp() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const isMobile = useIsMobile();
 
-  const parseClipboardData = useCallback((text: string): TableData | null => {
-    const lines = text.trim().split("\n");
-    if (lines.length < 2) return null;
-
-    const headers = lines[0].split("\t").map((h) => h.trim());
-    const rows = lines
-      .slice(1)
-      .map((line) => line.split("\t").map((cell) => cell.trim()));
-
-    // Validate that all rows have the same number of columns
-    const expectedColumns = headers.length;
-    const validRows = rows.filter((row) => row.length === expectedColumns);
-
-    if (validRows.length === 0) return null;
-
-    return { headers, rows: validRows };
-  }, []);
-
-  const parseCSVFile = useCallback((content: string): TableData | null => {
-    const lines = content.trim().split("\n");
-    if (lines.length < 2) return null;
-
-    const headers = lines[0].split(",").map((h) => h.trim().replace(/"/g, ""));
-    const rows = lines
-      .slice(1)
-      .map((line) =>
-        line.split(",").map((cell) => cell.trim().replace(/"/g, ""))
-      );
-
-    const expectedColumns = headers.length;
-    const validRows = rows.filter((row) => row.length === expectedColumns);
-
-    if (validRows.length === 0) return null;
-
-    return { headers, rows: validRows };
-  }, []);
 
   const processData = useCallback(
     async (parsed: TableData, fileName?: string) => {
       setIsProcessing(true);
       setLoadingProgress(0);
 
-      const dataSize = parsed.rows.length * parsed.headers.length;
-      const isLargeDataset = dataSize > 1000; // More than 1000 cells
+      const stats = getTableStats(parsed);
+      const isLargeDataset = stats.isLargeDataset;
       const baseDelay = isLargeDataset ? 150 : 50; // Longer delays for large datasets
 
       setLoadingMessage("Veri boyutu analiz ediliyor...");
@@ -168,10 +135,11 @@ export default function TablioApp() {
       setLoadingProgress(0);
       setLoadingMessage("");
 
+      const finalStats = getTableStats(parsed);
       toast.success(
-        `Tablo başarıyla yüklendi! ${parsed.rows.length} satır ve ${
-          parsed.headers.length
-        } sütun içeren ${isLargeDataset ? "büyük " : ""}tablo yüklendi.`
+        `Tablo başarıyla yüklendi! ${finalStats.rows} satır ve ${
+          finalStats.columns
+        } sütun içeren ${finalStats.isLargeDataset ? "büyük " : ""}tablo yüklendi.`
       );
     },
     []
@@ -230,7 +198,7 @@ export default function TablioApp() {
         );
       }
     },
-    [parseCSVFile, processData]
+    [processData]
   );
 
   const handleFileUpload = useCallback(
@@ -251,7 +219,7 @@ export default function TablioApp() {
         reader.readAsText(file);
       }
     },
-    [parseCSVFile, processData]
+    [processData]
   );
 
   const handlePaste = useCallback(async () => {
@@ -271,7 +239,7 @@ export default function TablioApp() {
         "Yapıştırma hatası: Panoya erişim sağlanamadı. Lütfen CTRL+V ile manuel olarak yapıştırın."
       );
     }
-  }, [parseClipboardData, processData]);
+  }, [processData]);
 
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
@@ -303,9 +271,13 @@ export default function TablioApp() {
   const handleCellSave = useCallback(() => {
     if (!editingCell || !tableData) return;
 
-    const newTableData = { ...tableData };
-    newTableData.rows[editingCell.row][editingCell.col] = editValue;
-    setTableData(newTableData);
+    const updatedTableData = updateTableCell(
+      tableData,
+      editingCell.row,
+      editingCell.col,
+      editValue
+    );
+    setTableData(updatedTableData);
     setEditingCell(null);
     setEditValue("");
   }, [editingCell, editValue, tableData]);
@@ -318,25 +290,20 @@ export default function TablioApp() {
   const addRow = useCallback(() => {
     if (!tableData) return;
 
-    const newRow = new Array(tableData.headers.length).fill("");
-    const newTableData = {
-      ...tableData,
-      rows: [...tableData.rows, newRow],
-    };
-    setTableData(newTableData);
+    const updatedTableData = addRowToTable(tableData);
+    setTableData(updatedTableData);
     toast.success("Satır eklendi: Tabloya yeni bir satır eklendi.");
   }, [tableData]);
 
   const removeRow = useCallback(
     (rowIndex: number) => {
-      if (!tableData || tableData.rows.length <= 1) return;
+      if (!tableData) return;
 
-      const newTableData = {
-        ...tableData,
-        rows: tableData.rows.filter((_, index) => index !== rowIndex),
-      };
-      setTableData(newTableData);
-      toast.success("Satır silindi: Seçilen satır tablodan kaldırıldı.");
+      const updatedTableData = removeRowFromTable(tableData, rowIndex);
+      if (updatedTableData) {
+        setTableData(updatedTableData);
+        toast.success("Satır silindi: Seçilen satır tablodan kaldırıldı.");
+      }
     },
     [tableData]
   );
@@ -344,27 +311,20 @@ export default function TablioApp() {
   const addColumn = useCallback(() => {
     if (!tableData) return;
 
-    const newHeader = `Sütun ${tableData.headers.length + 1}`;
-    const newTableData = {
-      headers: [...tableData.headers, newHeader],
-      rows: tableData.rows.map((row) => [...row, ""]),
-    };
-    setTableData(newTableData);
+    const updatedTableData = addColumnToTable(tableData);
+    setTableData(updatedTableData);
     toast.success("Sütun eklendi: Tabloya yeni bir sütun eklendi.");
   }, [tableData]);
 
   const removeColumn = useCallback(
     (colIndex: number) => {
-      if (!tableData || tableData.headers.length <= 1) return;
+      if (!tableData) return;
 
-      const newTableData = {
-        headers: tableData.headers.filter((_, index) => index !== colIndex),
-        rows: tableData.rows.map((row) =>
-          row.filter((_, index) => index !== colIndex)
-        ),
-      };
-      setTableData(newTableData);
-      toast.success("Sütun silindi: Seçilen sütun tablodan kaldırıldı.");
+      const updatedTableData = removeColumnFromTable(tableData, colIndex);
+      if (updatedTableData) {
+        setTableData(updatedTableData);
+        toast.success("Sütun silindi: Seçilen sütun tablodan kaldırıldı.");
+      }
     },
     [tableData]
   );
@@ -375,8 +335,8 @@ export default function TablioApp() {
     setIsDownloading(true);
     setLoadingProgress(0);
 
-    const dataSize = tableData.rows.length * tableData.headers.length;
-    const isLargeDataset = dataSize > 1000;
+    const stats = getTableStats(tableData);
+    const isLargeDataset = stats.isLargeDataset;
     const isComplexFormat = format === "json" || format === "xml";
     const baseDelay = isLargeDataset
       ? isComplexFormat
@@ -394,101 +354,28 @@ export default function TablioApp() {
     setLoadingProgress(30);
     await new Promise((resolve) => setTimeout(resolve, baseDelay));
 
-    let content: string;
-    let mimeType: string;
-    let fileExtension: string;
-
     if (isLargeDataset) {
       setLoadingMessage("Veri yapısı oluşturuluyor...");
       setLoadingProgress(50);
       await new Promise((resolve) => setTimeout(resolve, baseDelay));
     }
 
-    switch (format) {
-      case "csv":
-        if (isLargeDataset) {
-          setLoadingMessage("CSV satırları oluşturuluyor...");
-          setLoadingProgress(70);
-          await new Promise((resolve) => setTimeout(resolve, baseDelay / 2));
-        }
-        content = [
-          tableData.headers.join(","),
-          ...tableData.rows.map((row) => row.join(",")),
-        ].join("\n");
-        mimeType = "text/csv;charset=utf-8;";
-        fileExtension = "csv";
-        break;
+    // Format-specific loading messages
+    const formatMessages: Record<ExportFormat, string> = {
+      csv: "CSV satırları oluşturuluyor...",
+      tsv: "TSV satırları oluşturuluyor...",
+      json: "JSON objeleri oluşturuluyor...",
+      xml: "XML yapısı oluşturuluyor...",
+      xlsx: "Excel formatı hazırlanıyor..."
+    };
 
-      case "tsv":
-        if (isLargeDataset) {
-          setLoadingMessage("TSV satırları oluşturuluyor...");
-          setLoadingProgress(70);
-          await new Promise((resolve) => setTimeout(resolve, baseDelay / 2));
-        }
-        content = [
-          tableData.headers.join("\t"),
-          ...tableData.rows.map((row) => row.join("\t")),
-        ].join("\n");
-        mimeType = "text/tab-separated-values;charset=utf-8;";
-        fileExtension = "tsv";
-        break;
-
-      case "json":
-        setLoadingMessage("JSON objeleri oluşturuluyor...");
-        setLoadingProgress(70);
-        await new Promise((resolve) => setTimeout(resolve, baseDelay));
-
-        const jsonData = tableData.rows.map((row) => {
-          const obj: Record<string, string> = {};
-          tableData.headers.forEach((header, index) => {
-            obj[header] = row[index] || "";
-          });
-          return obj;
-        });
-        content = JSON.stringify(jsonData, null, 2);
-        mimeType = "application/json;charset=utf-8;";
-        fileExtension = "json";
-        break;
-
-      case "xml":
-        setLoadingMessage("XML yapısı oluşturuluyor...");
-        setLoadingProgress(70);
-        await new Promise((resolve) => setTimeout(resolve, baseDelay));
-
-        const xmlRows = tableData.rows
-          .map((row) => {
-            const fields = tableData.headers
-              .map(
-                (header, index) =>
-                  `    <${header.replace(/\s+/g, "_")}>${
-                    row[index] || ""
-                  }</${header.replace(/\s+/g, "_")}>`
-              )
-              .join("\n");
-            return `  <row>\n${fields}\n  </row>`;
-          })
-          .join("\n");
-        content = `<?xml version="1.0" encoding="UTF-8"?>\n<data>\n${xmlRows}\n</data>`;
-        mimeType = "application/xml;charset=utf-8;";
-        fileExtension = "xml";
-        break;
-
-      case "xlsx":
-      default:
-        if (isLargeDataset) {
-          setLoadingMessage("Excel formatı hazırlanıyor...");
-          setLoadingProgress(70);
-          await new Promise((resolve) => setTimeout(resolve, baseDelay / 2));
-        }
-        // For now, XLSX will download as CSV until we add a proper XLSX library
-        content = [
-          tableData.headers.join(","),
-          ...tableData.rows.map((row) => row.join(",")),
-        ].join("\n");
-        mimeType = "text/csv;charset=utf-8;";
-        fileExtension = "csv";
-        break;
+    if (isLargeDataset) {
+      setLoadingMessage(formatMessages[format]);
+      setLoadingProgress(70);
+      await new Promise((resolve) => setTimeout(resolve, baseDelay / 2));
     }
+
+    const { content, mimeType, fileExtension } = formatTableData(tableData, format);
 
     setLoadingMessage("Dosya oluşturuluyor...");
     setLoadingProgress(85);
@@ -696,10 +583,10 @@ export default function TablioApp() {
               </div>
             ) : (
               <Card
-                className={`w-full max-w-2xl p-6 sm:p-12 tablio-paste-area cursor-pointer transition-all duration-300 transform hover:scale-[1.02] border-2 border-dashed border-primary ${
+                className={`w-full max-w-2xl p-6 sm:p-12 tablio-paste-area cursor-pointer transition-all duration-300 transform hover:scale-[1.02] border-2 border-dashed ${
                   isDragOver
-                    ? "border-primary border-2 border-solid bg-primary/5 scale-[1.02]"
-                    : "hover:bg-primary/5 hover:shadow-lg"
+                    ? "border-primary border-solid bg-primary/5 scale-[1.02]"
+                    : "border-gray-300 hover:border-primary hover:bg-primary/5 hover:shadow-lg"
                 }`}
                 onDragEnter={handleDragEnter} // Added dragenter handler
                 onDragOver={handleDragOver}
@@ -792,7 +679,7 @@ export default function TablioApp() {
                   <label className="text-sm font-medium text-foreground">
                     Format
                   </label>
-                  <Select value={format} onValueChange={setFormat}>
+                  <Select value={format} onValueChange={(value: ExportFormat) => setFormat(value)}>
                     <SelectTrigger className="w-full sm:w-40 bg-input transition-all duration-200 hover:bg-input/80">
                       <SelectValue />
                     </SelectTrigger>
