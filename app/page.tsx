@@ -12,41 +12,31 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Card } from "@/components/ui/card";
 import {
   Download,
   Trash2,
   FileSpreadsheet,
-  Plus,
-  Minus,
-  Edit3,
   Loader2,
   Menu,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useIsMobile } from "@/hooks/use-mobile";
-import type { TableData, EditingCell, ExportFormat } from "@/types/tablio";
+import type { TableData, ExportFormat } from "@/types/tablio";
 import { formatTableData } from "@/utils/export-formatters";
-import {
-  addRowToTable,
-  removeRowFromTable,
-  addColumnToTable,
-  removeColumnFromTable,
-  updateTableCell,
-  getTableStats,
-} from "@/utils/table-operations";
+import { getTableStats } from "@/utils/table-operations";
 import { SkeletonTable } from "@/components/tablio/feedback/SkeletonTable";
 import { ProcessingLoadingOverlay } from "@/components/tablio/feedback/ProcessingLoadingOverlay";
 import { DownloadLoadingOverlay } from "@/components/tablio/feedback/DownloadLoadingOverlay";
 import { DataInput } from "@/components/tablio/input/DataInput";
 import { useDataInput } from "@/hooks/use-data-input";
+import { EditableTable } from "@/components/tablio/table/EditableTable";
+import { TableControls } from "@/components/tablio/table/TableControls";
+import { useTableEditor } from "@/hooks/use-table-editor";
 
 export default function TablioApp() {
   const [tableData, setTableData] = useState<TableData | null>(null);
   const [fileName, setFileName] = useState("tablio-export");
   const [format, setFormat] = useState<ExportFormat>("xlsx");
-  const [editingCell, setEditingCell] = useState<EditingCell | null>(null);
-  const [editValue, setEditValue] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
   const [showMobileControls, setShowMobileControls] = useState(false);
@@ -147,6 +137,12 @@ export default function TablioApp() {
   // Data input hook
   const dataInputProps = useDataInput({ onDataLoaded: processData });
 
+  // Table editor hook
+  const tableEditorProps = useTableEditor({ 
+    tableData, 
+    onTableChange: setTableData 
+  });
+
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
       dataInputProps.handleKeyDown(e, isProcessing);
@@ -158,79 +154,10 @@ export default function TablioApp() {
     setTableData(null);
     setFileName("tablio-export");
     setFormat("xlsx");
-    setEditingCell(null);
     setShowMobileControls(false);
     toast.success("Veriler temizlendi: Yeni bir tablo yapıştırabilirsiniz.");
   }, []);
 
-  const handleCellClick = useCallback(
-    (rowIndex: number, colIndex: number, currentValue: string) => {
-      setEditingCell({ row: rowIndex, col: colIndex });
-      setEditValue(currentValue);
-    },
-    []
-  );
-
-  const handleCellSave = useCallback(() => {
-    if (!editingCell || !tableData) return;
-
-    const updatedTableData = updateTableCell(
-      tableData,
-      editingCell.row,
-      editingCell.col,
-      editValue
-    );
-    setTableData(updatedTableData);
-    setEditingCell(null);
-    setEditValue("");
-  }, [editingCell, editValue, tableData]);
-
-  const handleCellCancel = useCallback(() => {
-    setEditingCell(null);
-    setEditValue("");
-  }, []);
-
-  const addRow = useCallback(() => {
-    if (!tableData) return;
-
-    const updatedTableData = addRowToTable(tableData);
-    setTableData(updatedTableData);
-    toast.success("Satır eklendi: Tabloya yeni bir satır eklendi.");
-  }, [tableData]);
-
-  const removeRow = useCallback(
-    (rowIndex: number) => {
-      if (!tableData) return;
-
-      const updatedTableData = removeRowFromTable(tableData, rowIndex);
-      if (updatedTableData) {
-        setTableData(updatedTableData);
-        toast.success("Satır silindi: Seçilen satır tablodan kaldırıldı.");
-      }
-    },
-    [tableData]
-  );
-
-  const addColumn = useCallback(() => {
-    if (!tableData) return;
-
-    const updatedTableData = addColumnToTable(tableData);
-    setTableData(updatedTableData);
-    toast.success("Sütun eklendi: Tabloya yeni bir sütun eklendi.");
-  }, [tableData]);
-
-  const removeColumn = useCallback(
-    (colIndex: number) => {
-      if (!tableData) return;
-
-      const updatedTableData = removeColumnFromTable(tableData, colIndex);
-      if (updatedTableData) {
-        setTableData(updatedTableData);
-        toast.success("Sütun silindi: Seçilen sütun tablodan kaldırıldı.");
-      }
-    },
-    [tableData]
-  );
 
   const handleDownload = useCallback(async () => {
     if (!tableData) return;
@@ -483,157 +410,22 @@ export default function TablioApp() {
               />
             )}
 
-            <Card className="p-4 transition-all duration-200 hover:shadow-md">
-              <div className="flex flex-col sm:flex-row sm:flex-wrap gap-2 sm:gap-2">
-                <div className="flex gap-2 w-full sm:w-auto">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={addRow}
-                    className="gap-2 bg-transparent transition-all duration-200 hover:scale-105 flex-1 sm:flex-none touch-manipulation"
-                  >
-                    <Plus className="w-4 h-4" />
-                    <span className="text-xs sm:text-sm">Satır Ekle</span>
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={addColumn}
-                    className="gap-2 bg-transparent transition-all duration-200 hover:scale-105 flex-1 sm:flex-none touch-manipulation"
-                  >
-                    <Plus className="w-4 h-4" />
-                    <span className="text-xs sm:text-sm">Sütun Ekle</span>
-                  </Button>
-                </div>
-                <div className="flex items-center gap-2 text-xs sm:text-sm text-muted-foreground justify-center sm:justify-start">
-                  <Edit3 className="w-4 h-4" />
-                  <span className="text-center sm:text-left">
-                    Hücrelere tıklayarak düzenleyebilirsiniz
-                  </span>
-                </div>
-              </div>
-            </Card>
+            <TableControls
+              onAddRow={tableEditorProps.addRow}
+              onAddColumn={tableEditorProps.addColumn}
+            />
 
-            <Card className="p-3 sm:p-6 transition-all duration-200 hover:shadow-md">
-              <h3 className="text-base sm:text-lg font-semibold text-foreground mb-3 sm:mb-4">
-                Tablo Önizleme
-              </h3>
-
-              {/* Mobile table wrapper with horizontal scroll */}
-              <div className="tablio-table border rounded-lg overflow-x-auto -mx-3 sm:mx-0">
-                <div className="min-w-max sm:min-w-0">
-                  <table className="w-full">
-                    <thead>
-                      <tr className="border-b bg-muted/50">
-                        {tableData.headers.map((header, index) => (
-                          <th
-                            key={index}
-                            className="text-left p-2 sm:p-3 font-medium text-foreground relative group min-w-[120px] sm:min-w-0"
-                          >
-                            <div
-                              className="truncate pr-6 sm:pr-8"
-                              title={header}
-                            >
-                              {header}
-                            </div>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => removeColumn(index)}
-                              className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-all duration-200 w-5 h-5 sm:w-6 sm:h-6 p-0 hover:bg-destructive hover:text-destructive-foreground hover:scale-110 touch-manipulation"
-                            >
-                              <Minus className="w-2 h-2 sm:w-3 sm:h-3" />
-                            </Button>
-                          </th>
-                        ))}
-                        <th className="w-8 sm:w-10"></th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {tableData.rows.map((row, rowIndex) => (
-                        <tr
-                          key={rowIndex}
-                          className="border-b hover:bg-muted/30 group transition-colors duration-200"
-                        >
-                          {row.map((cell, cellIndex) => (
-                            <td
-                              key={cellIndex}
-                              className="p-2 sm:p-3 text-foreground relative min-w-[120px] sm:min-w-0"
-                            >
-                              {editingCell?.row === rowIndex &&
-                              editingCell?.col === cellIndex ? (
-                                <div className="flex gap-1 animate-in fade-in duration-200">
-                                  <Input
-                                    value={editValue}
-                                    onChange={(e) =>
-                                      setEditValue(e.target.value)
-                                    }
-                                    onKeyDown={(e) => {
-                                      if (e.key === "Enter") handleCellSave();
-                                      if (e.key === "Escape")
-                                        handleCellCancel();
-                                    }}
-                                    className="h-7 sm:h-8 text-xs sm:text-sm min-w-0"
-                                    autoFocus
-                                  />
-                                  <Button
-                                    size="sm"
-                                    onClick={handleCellSave}
-                                    className="h-7 sm:h-8 px-1 sm:px-2 transition-all duration-200 hover:scale-110 touch-manipulation text-xs"
-                                  >
-                                    ✓
-                                  </Button>
-                                  <Button
-                                    size="sm"
-                                    variant="outline"
-                                    onClick={handleCellCancel}
-                                    className="h-7 sm:h-8 px-1 sm:px-2 bg-transparent transition-all duration-200 hover:scale-110 touch-manipulation text-xs"
-                                  >
-                                    ✕
-                                  </Button>
-                                </div>
-                              ) : (
-                                <div
-                                  className="cursor-pointer hover:bg-muted/50 rounded px-1 sm:px-2 py-1 -mx-1 sm:-mx-2 -my-1 transition-all duration-200 hover:scale-[1.02] touch-manipulation min-h-[32px] sm:min-h-[36px] flex items-center"
-                                  onClick={() =>
-                                    handleCellClick(rowIndex, cellIndex, cell)
-                                  }
-                                >
-                                  <span
-                                    className="truncate text-xs sm:text-sm"
-                                    title={cell}
-                                  >
-                                    {cell || (
-                                      <span className="text-muted-foreground italic">
-                                        Boş
-                                      </span>
-                                    )}
-                                  </span>
-                                </div>
-                              )}
-                            </td>
-                          ))}
-                          <td className="p-2 sm:p-3 w-8 sm:w-10">
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => removeRow(rowIndex)}
-                              className="opacity-0 group-hover:opacity-100 transition-all duration-200 w-5 h-5 sm:w-6 sm:h-6 p-0 hover:bg-destructive hover:text-destructive-foreground hover:scale-110 touch-manipulation"
-                            >
-                              <Minus className="w-2 h-2 sm:w-3 sm:h-3" />
-                            </Button>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-
-              <p className="text-xs sm:text-sm text-muted-foreground mt-3 animate-in fade-in duration-300 text-center sm:text-left">
-                {tableData.rows.length} satır, {tableData.headers.length} sütun
-              </p>
-            </Card>
+            <EditableTable
+              tableData={tableData}
+              editingCell={tableEditorProps.editingCell}
+              editValue={tableEditorProps.editValue}
+              onEditValueChange={tableEditorProps.setEditValue}
+              onCellClick={tableEditorProps.handleCellClick}
+              onCellSave={tableEditorProps.handleCellSave}
+              onCellCancel={tableEditorProps.handleCellCancel}
+              onRemoveRow={tableEditorProps.removeRow}
+              onRemoveColumn={tableEditorProps.removeColumn}
+            />
           </div>
         )}
       </main>

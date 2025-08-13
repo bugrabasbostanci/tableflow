@@ -1,7 +1,7 @@
 🎯 Öncelikli Adımlar
 
 1. Tip tanımları ve utility fonksiyonları çıkarılmalı (Uyguladık)
-2. Data processing logic ayrı hook'lara taşınmalı
+2. Data processing logic ayrı hook'lara taşınmalı (Uyguladık)
 3. Table editing bileşenlere bölünmeli
 4. Loading states ayrı component'lere çıkarılmalı (Uyguladık)
 
