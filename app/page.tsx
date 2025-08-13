@@ -38,6 +38,9 @@ import {
   updateTableCell,
   getTableStats,
 } from "@/utils/table-operations";
+import { SkeletonTable } from "@/components/tablio/feedback/SkeletonTable";
+import { ProcessingLoadingOverlay } from "@/components/tablio/feedback/ProcessingLoadingOverlay";
+import { DownloadLoadingOverlay } from "@/components/tablio/feedback/DownloadLoadingOverlay";
 
 export default function TablioApp() {
   const [tableData, setTableData] = useState<TableData | null>(null);
@@ -416,29 +419,6 @@ export default function TablioApp() {
     );
   }, []);
 
-  const SkeletonTable = () => (
-    <Card className="p-3 sm:p-6 animate-pulse">
-      <div className="h-4 sm:h-5 bg-muted rounded w-32 mb-4"></div>
-      <div className="border rounded-lg overflow-hidden">
-        <div className="bg-muted/50 p-3 border-b">
-          <div className="flex gap-4">
-            {[1, 2, 3, 4].map((i) => (
-              <div key={i} className="h-4 bg-muted rounded flex-1"></div>
-            ))}
-          </div>
-        </div>
-        {[1, 2, 3, 4, 5].map((row) => (
-          <div key={row} className="p-3 border-b last:border-b-0">
-            <div className="flex gap-4">
-              {[1, 2, 3, 4].map((col) => (
-                <div key={col} className="h-3 bg-muted/70 rounded flex-1"></div>
-              ))}
-            </div>
-          </div>
-        ))}
-      </div>
-    </Card>
-  );
 
   useEffect(() => {
     const preventDefaults = (e: DragEvent) => {
@@ -499,86 +479,10 @@ export default function TablioApp() {
           <div className="flex flex-col items-center justify-center min-h-[300px] sm:min-h-[400px]">
             {isProcessing ? (
               <div className="w-full max-w-4xl space-y-6 animate-in fade-in duration-500">
-                <Card className="w-full max-w-2xl mx-auto p-6 sm:p-12">
-                  <div className="text-center space-y-6">
-                    <div className="relative">
-                      <Loader2 className="w-12 h-12 sm:w-16 sm:h-16 text-primary mx-auto animate-spin" />
-                      <div className="absolute inset-0 rounded-full border-2 border-primary/20 animate-pulse"></div>
-                    </div>
-
-                    <div className="space-y-2">
-                      <h2 className="text-xl sm:text-2xl font-semibold text-foreground">
-                        Tablo işleniyor...
-                      </h2>
-                      <p className="text-sm sm:text-base text-muted-foreground animate-pulse">
-                        {loadingMessage}
-                      </p>
-                    </div>
-
-                    <div className="space-y-3">
-                      <div className="w-full bg-muted rounded-full h-2 overflow-hidden">
-                        <div
-                          className="bg-primary h-full rounded-full transition-all duration-500 ease-out relative overflow-hidden"
-                          style={{ width: `${loadingProgress}%` }}
-                        >
-                          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent animate-pulse"></div>
-                        </div>
-                      </div>
-                      <div className="flex justify-between text-xs text-muted-foreground">
-                        <span
-                          className={
-                            loadingProgress >= 10 ? "text-primary" : ""
-                          }
-                        >
-                          Boyut Analizi
-                        </span>
-                        <span
-                          className={
-                            loadingProgress >= 20 ? "text-primary" : ""
-                          }
-                        >
-                          Tespit
-                        </span>
-                        <span
-                          className={
-                            loadingProgress >= 30 ? "text-primary" : ""
-                          }
-                        >
-                          Kontrol
-                        </span>
-                        <span
-                          className={
-                            loadingProgress >= 50 ? "text-primary" : ""
-                          }
-                        >
-                          Hazırlık
-                        </span>
-                        <span
-                          className={
-                            loadingProgress >= 75 ? "text-primary" : ""
-                          }
-                        >
-                          Tip Belirleme
-                        </span>
-                        <span
-                          className={
-                            loadingProgress >= 95 ? "text-primary" : ""
-                          }
-                        >
-                          Hazırlanıyor
-                        </span>
-                        <span
-                          className={
-                            loadingProgress >= 100 ? "text-primary" : ""
-                          }
-                        >
-                          Tamamlandı
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                </Card>
-
+                <ProcessingLoadingOverlay 
+                  message={loadingMessage}
+                  progress={loadingProgress}
+                />
                 <SkeletonTable />
               </div>
             ) : (
@@ -730,26 +634,10 @@ export default function TablioApp() {
             </div>
 
             {isDownloading && (
-              <Card className="p-4 border-primary/50 bg-primary/5 animate-in fade-in duration-200">
-                <div className="flex items-center gap-3">
-                  <Loader2 className="w-5 h-5 text-primary animate-spin" />
-                  <div className="flex-1">
-                    <p className="text-sm font-medium text-foreground">
-                      {loadingMessage}
-                    </p>
-                    <div className="w-full bg-muted rounded-full h-2 mt-2">
-                      <div
-                        className="bg-primary h-full rounded-full transition-all duration-300 ease-out"
-                        style={{ width: `${loadingProgress}%` }}
-                      ></div>
-                    </div>
-                    <div className="flex justify-between text-xs text-muted-foreground mt-1">
-                      <span>İndiriliyor...</span>
-                      <span>{loadingProgress}%</span>
-                    </div>
-                  </div>
-                </div>
-              </Card>
+              <DownloadLoadingOverlay 
+                message={loadingMessage}
+                progress={loadingProgress}
+              />
             )}
 
             <Card className="p-4 transition-all duration-200 hover:shadow-md">
