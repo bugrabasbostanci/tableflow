@@ -2,7 +2,7 @@
 
 import type React from "react";
 
-import { useState, useCallback, useRef, useEffect } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -14,11 +14,9 @@ import {
 } from "@/components/ui/select";
 import { Card } from "@/components/ui/card";
 import {
-  Clipboard,
   Download,
   Trash2,
   FileSpreadsheet,
-  Upload,
   Plus,
   Minus,
   Edit3,
@@ -28,7 +26,6 @@ import {
 import { toast } from "sonner";
 import { useIsMobile } from "@/hooks/use-mobile";
 import type { TableData, EditingCell, ExportFormat } from "@/types/tablio";
-import { parseClipboardData, parseCSVFile } from "@/utils/data-parsers";
 import { formatTableData } from "@/utils/export-formatters";
 import {
   addRowToTable,
@@ -41,12 +38,13 @@ import {
 import { SkeletonTable } from "@/components/tablio/feedback/SkeletonTable";
 import { ProcessingLoadingOverlay } from "@/components/tablio/feedback/ProcessingLoadingOverlay";
 import { DownloadLoadingOverlay } from "@/components/tablio/feedback/DownloadLoadingOverlay";
+import { DataInput } from "@/components/tablio/input/DataInput";
+import { useDataInput } from "@/hooks/use-data-input";
 
 export default function TablioApp() {
   const [tableData, setTableData] = useState<TableData | null>(null);
   const [fileName, setFileName] = useState("tablio-export");
   const [format, setFormat] = useState<ExportFormat>("xlsx");
-  const [isDragOver, setIsDragOver] = useState(false);
   const [editingCell, setEditingCell] = useState<EditingCell | null>(null);
   const [editValue, setEditValue] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
@@ -54,9 +52,7 @@ export default function TablioApp() {
   const [showMobileControls, setShowMobileControls] = useState(false);
   const [loadingProgress, setLoadingProgress] = useState(0);
   const [loadingMessage, setLoadingMessage] = useState("");
-  const fileInputRef = useRef<HTMLInputElement>(null);
   const isMobile = useIsMobile();
-
 
   const processData = useCallback(
     async (parsed: TableData, fileName?: string) => {
@@ -148,110 +144,14 @@ export default function TablioApp() {
     []
   );
 
-  const handleDragOver = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation(); // Added stopPropagation to prevent event bubbling
-    setIsDragOver(true);
-  }, []);
-
-  const handleDragEnter = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation(); // Added dragenter handler to prevent browser default behavior
-    setIsDragOver(true);
-  }, []);
-
-  const handleDragLeave = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation(); // Added stopPropagation to prevent event bubbling
-    // Only set drag over to false if we're leaving the drop zone itself
-    if (!e.currentTarget.contains(e.relatedTarget as Node)) {
-      setIsDragOver(false);
-    }
-  }, []);
-
-  const handleDrop = useCallback(
-    async (e: React.DragEvent) => {
-      e.preventDefault();
-      e.stopPropagation(); // Added stopPropagation to prevent event bubbling
-      setIsDragOver(false);
-
-      const files = Array.from(e.dataTransfer.files);
-      const file = files[0];
-
-      if (!file) return;
-
-      if (file.type === "text/csv" || file.name.endsWith(".csv")) {
-        const reader = new FileReader();
-        reader.onload = async (event) => {
-          const content = event.target?.result as string;
-          const parsed = parseCSVFile(content);
-
-          if (parsed) {
-            await processData(parsed, file.name.replace(/\.[^/.]+$/, ""));
-          } else {
-            toast.error(
-              "Geçersiz dosya formatı: Lütfen geçerli bir CSV dosyası yükleyin."
-            );
-          }
-        };
-        reader.readAsText(file);
-      } else {
-        toast.error(
-          "Desteklenmeyen dosya formatı: Şu anda sadece CSV dosyaları desteklenmektedir."
-        );
-      }
-    },
-    [processData]
-  );
-
-  const handleFileUpload = useCallback(
-    async (e: React.ChangeEvent<HTMLInputElement>) => {
-      const file = e.target.files?.[0];
-      if (!file) return;
-
-      if (file.type === "text/csv" || file.name.endsWith(".csv")) {
-        const reader = new FileReader();
-        reader.onload = async (event) => {
-          const content = event.target?.result as string;
-          const parsed = parseCSVFile(content);
-
-          if (parsed) {
-            await processData(parsed, file.name.replace(/\.[^/.]+$/, ""));
-          }
-        };
-        reader.readAsText(file);
-      }
-    },
-    [processData]
-  );
-
-  const handlePaste = useCallback(async () => {
-    try {
-      const text = await navigator.clipboard.readText();
-      const parsed = parseClipboardData(text);
-
-      if (parsed) {
-        await processData(parsed);
-      } else {
-        toast.error(
-          "Geçersiz tablo formatı: Lütfen geçerli bir tablo verisi kopyalayıp tekrar deneyin."
-        );
-      }
-    } catch {
-      toast.error(
-        "Yapıştırma hatası: Panoya erişim sağlanamadı. Lütfen CTRL+V ile manuel olarak yapıştırın."
-      );
-    }
-  }, [processData]);
+  // Data input hook
+  const dataInputProps = useDataInput({ onDataLoaded: processData });
 
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
-      if (e.ctrlKey && e.key === "v" && !isProcessing) {
-        e.preventDefault();
-        handlePaste();
-      }
+      dataInputProps.handleKeyDown(e, isProcessing);
     },
-    [handlePaste, isProcessing]
+    [dataInputProps, isProcessing]
   );
 
   const handleClear = useCallback(() => {
@@ -452,14 +352,6 @@ export default function TablioApp() {
       onKeyDown={handleKeyDown}
       tabIndex={0}
     >
-      {/* Hidden file input */}
-      <input
-        ref={fileInputRef}
-        type="file"
-        accept=".csv"
-        onChange={handleFileUpload}
-        className="hidden"
-      />
 
       {/* Header */}
       <header className="py-6 sm:py-8 text-center px-4">
@@ -486,64 +378,15 @@ export default function TablioApp() {
                 <SkeletonTable />
               </div>
             ) : (
-              <Card
-                className={`w-full max-w-2xl p-6 sm:p-12 tablio-paste-area cursor-pointer transition-all duration-300 transform hover:scale-[1.02] border-2 border-dashed ${
-                  isDragOver
-                    ? "border-primary border-solid bg-primary/5 scale-[1.02]"
-                    : "border-gray-300 hover:border-primary hover:bg-primary/5 hover:shadow-lg"
-                }`}
-                onDragEnter={handleDragEnter} // Added dragenter handler
-                onDragOver={handleDragOver}
-                onDragLeave={handleDragLeave}
-                onDrop={handleDrop}
-                onClick={handlePaste}
-              >
-                <div className="text-center space-y-4">
-                  {isDragOver ? (
-                    <Upload className="w-12 h-12 sm:w-16 sm:h-16 text-primary mx-auto animate-bounce" />
-                  ) : (
-                    <Clipboard className="w-12 h-12 sm:w-16 sm:h-16 text-muted-foreground mx-auto transition-transform duration-200 hover:scale-110" />
-                  )}
-                  <h2 className="text-lg sm:text-2xl font-semibold text-foreground">
-                    {isDragOver
-                      ? "Dosyayı buraya bırakın"
-                      : "Kopyaladığınız tabloyu buraya yapıştırın"}
-                  </h2>
-                  <p className="text-sm sm:text-base text-muted-foreground px-2">
-                    {isDragOver
-                      ? "CSV dosyanızı bırakın ve otomatik olarak yüklensin"
-                      : "Excel, Google Sheets veya herhangi bir tablodan kopyaladığınız veriyi yapıştırın"}
-                  </p>
-                  {!isDragOver && (
-                    <>
-                      <div className="flex items-center justify-center gap-2 text-xs sm:text-sm text-muted-foreground">
-                        <kbd className="px-2 py-1 bg-primary/10 border border-primary/20 rounded text-xs text-primary font-semibold transition-colors hover:bg-primary/20">
-                          CTRL
-                        </kbd>
-                        <span className="text-primary font-bold">+</span>
-                        <kbd className="px-2 py-1 bg-primary/10 border border-primary/20 rounded text-xs text-primary font-semibold transition-colors hover:bg-primary/20">
-                          V
-                        </kbd>
-                        <span className="hidden sm:inline">
-                          veya buraya tıklayın
-                        </span>
-                        <span className="sm:hidden">ya da tıklayın</span>
-                      </div>
-                      <div className="pt-4">
-                        <Button
-                          variant="outline"
-                          onClick={() => fileInputRef.current?.click()}
-                          className="gap-2 transition-all duration-200 hover:scale-105 text-sm sm:text-base"
-                          size={isMobile ? "sm" : "default"}
-                        >
-                          <Upload className="w-4 h-4" />
-                          CSV Dosyası Yükle
-                        </Button>
-                      </div>
-                    </>
-                  )}
-                </div>
-              </Card>
+              <DataInput
+                onPaste={dataInputProps.handlePaste}
+                onFileUpload={dataInputProps.handleFileUpload}
+                isDragOver={dataInputProps.isDragOver}
+                onDragEnter={dataInputProps.handleDragEnter}
+                onDragOver={dataInputProps.handleDragOver}
+                onDragLeave={dataInputProps.handleDragLeave}
+                onDrop={dataInputProps.handleDrop}
+              />
             )}
           </div>
         ) : (

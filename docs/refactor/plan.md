@@ -1,9 +1,9 @@
 🎯 Öncelikli Adımlar
 
-1. Tip tanımları ve utility fonksiyonları çıkarılmalı
+1. Tip tanımları ve utility fonksiyonları çıkarılmalı (Uyguladık)
 2. Data processing logic ayrı hook'lara taşınmalı
 3. Table editing bileşenlere bölünmeli
-4. Loading states ayrı component'lere çıkarılmalı
+4. Loading states ayrı component'lere çıkarılmalı (Uyguladık)
 
 📁 Önerilen Yapı
 
@@ -17,6 +17,6 @@ components/tablio/
 
 Refactor işlemine başlayalım mı? Hangi aşamadan başlamak istersiniz:
 
-1. Tip tanımları ve utility'ler (En güvenli)
-2. Loading component'leri (Görsel iyileştirme)
+1. Tip tanımları ve utility'ler (En güvenli) (Uyguladık)
+2. Loading component'leri (Görsel iyileştirme) (Uyguladık)
 3. Tablo bileşenleri (En büyük etki)
