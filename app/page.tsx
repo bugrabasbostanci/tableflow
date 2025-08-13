@@ -1,102 +1,1047 @@
-import Image from "next/image";
+"use client";
 
-export default function Home() {
-  return (
-    <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="font-mono list-inside list-decimal text-sm/6 text-center sm:text-left">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] font-mono font-semibold px-1 py-0.5 rounded">
-              app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+import type React from "react";
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+import { useState, useCallback, useRef, useEffect } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Card } from "@/components/ui/card";
+import {
+  Clipboard,
+  Download,
+  Trash2,
+  FileSpreadsheet,
+  Upload,
+  Plus,
+  Minus,
+  Edit3,
+  Loader2,
+  Menu,
+} from "lucide-react";
+import { toast } from "sonner";
+import { useIsMobile } from "@/hooks/use-mobile";
+
+interface TableData {
+  headers: string[];
+  rows: string[][];
+}
+
+export default function TablioApp() {
+  const [tableData, setTableData] = useState<TableData | null>(null);
+  const [fileName, setFileName] = useState("tablio-export");
+  const [format, setFormat] = useState("xlsx");
+  const [isDragOver, setIsDragOver] = useState(false);
+  const [editingCell, setEditingCell] = useState<{
+    row: number;
+    col: number;
+  } | null>(null);
+  const [editValue, setEditValue] = useState("");
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [isDownloading, setIsDownloading] = useState(false);
+  const [showMobileControls, setShowMobileControls] = useState(false);
+  const [loadingProgress, setLoadingProgress] = useState(0);
+  const [loadingMessage, setLoadingMessage] = useState("");
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const isMobile = useIsMobile();
+
+  const parseClipboardData = useCallback((text: string): TableData | null => {
+    const lines = text.trim().split("\n");
+    if (lines.length < 2) return null;
+
+    const headers = lines[0].split("\t").map((h) => h.trim());
+    const rows = lines
+      .slice(1)
+      .map((line) => line.split("\t").map((cell) => cell.trim()));
+
+    // Validate that all rows have the same number of columns
+    const expectedColumns = headers.length;
+    const validRows = rows.filter((row) => row.length === expectedColumns);
+
+    if (validRows.length === 0) return null;
+
+    return { headers, rows: validRows };
+  }, []);
+
+  const parseCSVFile = useCallback((content: string): TableData | null => {
+    const lines = content.trim().split("\n");
+    if (lines.length < 2) return null;
+
+    const headers = lines[0].split(",").map((h) => h.trim().replace(/"/g, ""));
+    const rows = lines
+      .slice(1)
+      .map((line) =>
+        line.split(",").map((cell) => cell.trim().replace(/"/g, ""))
+      );
+
+    const expectedColumns = headers.length;
+    const validRows = rows.filter((row) => row.length === expectedColumns);
+
+    if (validRows.length === 0) return null;
+
+    return { headers, rows: validRows };
+  }, []);
+
+  const processData = useCallback(
+    async (parsed: TableData, fileName?: string) => {
+      setIsProcessing(true);
+      setLoadingProgress(0);
+
+      const dataSize = parsed.rows.length * parsed.headers.length;
+      const isLargeDataset = dataSize > 1000; // More than 1000 cells
+      const baseDelay = isLargeDataset ? 150 : 50; // Longer delays for large datasets
+
+      setLoadingMessage("Veri boyutu analiz ediliyor...");
+      setLoadingProgress(10);
+      await new Promise((resolve) => setTimeout(resolve, baseDelay));
+
+      if (isLargeDataset) {
+        setLoadingMessage("Büyük veri seti tespit edildi...");
+        setLoadingProgress(20);
+        await new Promise((resolve) => setTimeout(resolve, baseDelay));
+      }
+
+      setLoadingMessage("Tablo yapısı kontrol ediliyor...");
+      setLoadingProgress(isLargeDataset ? 30 : 25);
+      await new Promise((resolve) => setTimeout(resolve, baseDelay));
+
+      if (isLargeDataset) {
+        const chunkSize = 100;
+        const totalChunks = Math.ceil(parsed.rows.length / chunkSize);
+
+        for (let i = 0; i < totalChunks; i++) {
+          setLoadingMessage(`Satırlar işleniyor... (${i + 1}/${totalChunks})`);
+          setLoadingProgress(30 + (i / totalChunks) * 50);
+
+          // Simulate chunk processing
+          await new Promise((resolve) =>
+            setTimeout(resolve, Math.min(baseDelay, 100))
+          );
+
+          // Allow UI to update
+          if (i % 5 === 0) {
+            await new Promise((resolve) => requestAnimationFrame(resolve));
+          }
+        }
+      } else {
+        setLoadingMessage("Satırlar işleniyor...");
+        setLoadingProgress(50);
+        await new Promise((resolve) => setTimeout(resolve, baseDelay));
+      }
+
+      setLoadingMessage("Sütun tipleri belirleniyor...");
+      setLoadingProgress(isLargeDataset ? 85 : 75);
+      await new Promise((resolve) => setTimeout(resolve, baseDelay));
+
+      setLoadingMessage("Tablo hazırlanıyor...");
+      setLoadingProgress(90);
+      await new Promise((resolve) => setTimeout(resolve, baseDelay / 2));
+
+      setTableData(parsed);
+      if (fileName) {
+        setFileName(fileName);
+      }
+
+      setLoadingMessage("Render ediliyor...");
+      setLoadingProgress(95);
+
+      await new Promise((resolve) => requestAnimationFrame(resolve));
+      await new Promise((resolve) => requestAnimationFrame(resolve));
+
+      if (isLargeDataset) {
+        await new Promise((resolve) => setTimeout(resolve, 200));
+      } else {
+        await new Promise((resolve) => setTimeout(resolve, 100));
+      }
+
+      setLoadingMessage("Tamamlandı!");
+      setLoadingProgress(100);
+      await new Promise((resolve) => setTimeout(resolve, 300));
+
+      setIsProcessing(false);
+      setLoadingProgress(0);
+      setLoadingMessage("");
+
+      toast.success(
+        `Tablo başarıyla yüklendi! ${parsed.rows.length} satır ve ${
+          parsed.headers.length
+        } sütun içeren ${isLargeDataset ? "büyük " : ""}tablo yüklendi.`
+      );
+    },
+    []
+  );
+
+  const handleDragOver = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation(); // Added stopPropagation to prevent event bubbling
+    setIsDragOver(true);
+  }, []);
+
+  const handleDragEnter = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation(); // Added dragenter handler to prevent browser default behavior
+    setIsDragOver(true);
+  }, []);
+
+  const handleDragLeave = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation(); // Added stopPropagation to prevent event bubbling
+    // Only set drag over to false if we're leaving the drop zone itself
+    if (!e.currentTarget.contains(e.relatedTarget as Node)) {
+      setIsDragOver(false);
+    }
+  }, []);
+
+  const handleDrop = useCallback(
+    async (e: React.DragEvent) => {
+      e.preventDefault();
+      e.stopPropagation(); // Added stopPropagation to prevent event bubbling
+      setIsDragOver(false);
+
+      const files = Array.from(e.dataTransfer.files);
+      const file = files[0];
+
+      if (!file) return;
+
+      if (file.type === "text/csv" || file.name.endsWith(".csv")) {
+        const reader = new FileReader();
+        reader.onload = async (event) => {
+          const content = event.target?.result as string;
+          const parsed = parseCSVFile(content);
+
+          if (parsed) {
+            await processData(parsed, file.name.replace(/\.[^/.]+$/, ""));
+          } else {
+            toast.error(
+              "Geçersiz dosya formatı: Lütfen geçerli bir CSV dosyası yükleyin."
+            );
+          }
+        };
+        reader.readAsText(file);
+      } else {
+        toast.error(
+          "Desteklenmeyen dosya formatı: Şu anda sadece CSV dosyaları desteklenmektedir."
+        );
+      }
+    },
+    [parseCSVFile, processData]
+  );
+
+  const handleFileUpload = useCallback(
+    async (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0];
+      if (!file) return;
+
+      if (file.type === "text/csv" || file.name.endsWith(".csv")) {
+        const reader = new FileReader();
+        reader.onload = async (event) => {
+          const content = event.target?.result as string;
+          const parsed = parseCSVFile(content);
+
+          if (parsed) {
+            await processData(parsed, file.name.replace(/\.[^/.]+$/, ""));
+          }
+        };
+        reader.readAsText(file);
+      }
+    },
+    [parseCSVFile, processData]
+  );
+
+  const handlePaste = useCallback(async () => {
+    try {
+      const text = await navigator.clipboard.readText();
+      const parsed = parseClipboardData(text);
+
+      if (parsed) {
+        await processData(parsed);
+      } else {
+        toast.error(
+          "Geçersiz tablo formatı: Lütfen geçerli bir tablo verisi kopyalayıp tekrar deneyin."
+        );
+      }
+    } catch {
+      toast.error(
+        "Yapıştırma hatası: Panoya erişim sağlanamadı. Lütfen CTRL+V ile manuel olarak yapıştırın."
+      );
+    }
+  }, [parseClipboardData, processData]);
+
+  const handleKeyDown = useCallback(
+    (e: React.KeyboardEvent) => {
+      if (e.ctrlKey && e.key === "v" && !isProcessing) {
+        e.preventDefault();
+        handlePaste();
+      }
+    },
+    [handlePaste, isProcessing]
+  );
+
+  const handleClear = useCallback(() => {
+    setTableData(null);
+    setFileName("tablio-export");
+    setFormat("xlsx");
+    setEditingCell(null);
+    setShowMobileControls(false);
+    toast.success("Veriler temizlendi: Yeni bir tablo yapıştırabilirsiniz.");
+  }, []);
+
+  const handleCellClick = useCallback(
+    (rowIndex: number, colIndex: number, currentValue: string) => {
+      setEditingCell({ row: rowIndex, col: colIndex });
+      setEditValue(currentValue);
+    },
+    []
+  );
+
+  const handleCellSave = useCallback(() => {
+    if (!editingCell || !tableData) return;
+
+    const newTableData = { ...tableData };
+    newTableData.rows[editingCell.row][editingCell.col] = editValue;
+    setTableData(newTableData);
+    setEditingCell(null);
+    setEditValue("");
+  }, [editingCell, editValue, tableData]);
+
+  const handleCellCancel = useCallback(() => {
+    setEditingCell(null);
+    setEditValue("");
+  }, []);
+
+  const addRow = useCallback(() => {
+    if (!tableData) return;
+
+    const newRow = new Array(tableData.headers.length).fill("");
+    const newTableData = {
+      ...tableData,
+      rows: [...tableData.rows, newRow],
+    };
+    setTableData(newTableData);
+    toast.success("Satır eklendi: Tabloya yeni bir satır eklendi.");
+  }, [tableData]);
+
+  const removeRow = useCallback(
+    (rowIndex: number) => {
+      if (!tableData || tableData.rows.length <= 1) return;
+
+      const newTableData = {
+        ...tableData,
+        rows: tableData.rows.filter((_, index) => index !== rowIndex),
+      };
+      setTableData(newTableData);
+      toast.success("Satır silindi: Seçilen satır tablodan kaldırıldı.");
+    },
+    [tableData]
+  );
+
+  const addColumn = useCallback(() => {
+    if (!tableData) return;
+
+    const newHeader = `Sütun ${tableData.headers.length + 1}`;
+    const newTableData = {
+      headers: [...tableData.headers, newHeader],
+      rows: tableData.rows.map((row) => [...row, ""]),
+    };
+    setTableData(newTableData);
+    toast.success("Sütun eklendi: Tabloya yeni bir sütun eklendi.");
+  }, [tableData]);
+
+  const removeColumn = useCallback(
+    (colIndex: number) => {
+      if (!tableData || tableData.headers.length <= 1) return;
+
+      const newTableData = {
+        headers: tableData.headers.filter((_, index) => index !== colIndex),
+        rows: tableData.rows.map((row) =>
+          row.filter((_, index) => index !== colIndex)
+        ),
+      };
+      setTableData(newTableData);
+      toast.success("Sütun silindi: Seçilen sütun tablodan kaldırıldı.");
+    },
+    [tableData]
+  );
+
+  const handleDownload = useCallback(async () => {
+    if (!tableData) return;
+
+    setIsDownloading(true);
+    setLoadingProgress(0);
+
+    const dataSize = tableData.rows.length * tableData.headers.length;
+    const isLargeDataset = dataSize > 1000;
+    const isComplexFormat = format === "json" || format === "xml";
+    const baseDelay = isLargeDataset
+      ? isComplexFormat
+        ? 200
+        : 150
+      : isComplexFormat
+      ? 100
+      : 50;
+
+    setLoadingMessage("Dosya hazırlığı başlatılıyor...");
+    setLoadingProgress(10);
+    await new Promise((resolve) => setTimeout(resolve, baseDelay / 2));
+
+    setLoadingMessage(`${format.toUpperCase()} formatına dönüştürülüyor...`);
+    setLoadingProgress(30);
+    await new Promise((resolve) => setTimeout(resolve, baseDelay));
+
+    let content: string;
+    let mimeType: string;
+    let fileExtension: string;
+
+    if (isLargeDataset) {
+      setLoadingMessage("Veri yapısı oluşturuluyor...");
+      setLoadingProgress(50);
+      await new Promise((resolve) => setTimeout(resolve, baseDelay));
+    }
+
+    switch (format) {
+      case "csv":
+        if (isLargeDataset) {
+          setLoadingMessage("CSV satırları oluşturuluyor...");
+          setLoadingProgress(70);
+          await new Promise((resolve) => setTimeout(resolve, baseDelay / 2));
+        }
+        content = [
+          tableData.headers.join(","),
+          ...tableData.rows.map((row) => row.join(",")),
+        ].join("\n");
+        mimeType = "text/csv;charset=utf-8;";
+        fileExtension = "csv";
+        break;
+
+      case "tsv":
+        if (isLargeDataset) {
+          setLoadingMessage("TSV satırları oluşturuluyor...");
+          setLoadingProgress(70);
+          await new Promise((resolve) => setTimeout(resolve, baseDelay / 2));
+        }
+        content = [
+          tableData.headers.join("\t"),
+          ...tableData.rows.map((row) => row.join("\t")),
+        ].join("\n");
+        mimeType = "text/tab-separated-values;charset=utf-8;";
+        fileExtension = "tsv";
+        break;
+
+      case "json":
+        setLoadingMessage("JSON objeleri oluşturuluyor...");
+        setLoadingProgress(70);
+        await new Promise((resolve) => setTimeout(resolve, baseDelay));
+
+        const jsonData = tableData.rows.map((row) => {
+          const obj: Record<string, string> = {};
+          tableData.headers.forEach((header, index) => {
+            obj[header] = row[index] || "";
+          });
+          return obj;
+        });
+        content = JSON.stringify(jsonData, null, 2);
+        mimeType = "application/json;charset=utf-8;";
+        fileExtension = "json";
+        break;
+
+      case "xml":
+        setLoadingMessage("XML yapısı oluşturuluyor...");
+        setLoadingProgress(70);
+        await new Promise((resolve) => setTimeout(resolve, baseDelay));
+
+        const xmlRows = tableData.rows
+          .map((row) => {
+            const fields = tableData.headers
+              .map(
+                (header, index) =>
+                  `    <${header.replace(/\s+/g, "_")}>${
+                    row[index] || ""
+                  }</${header.replace(/\s+/g, "_")}>`
+              )
+              .join("\n");
+            return `  <row>\n${fields}\n  </row>`;
+          })
+          .join("\n");
+        content = `<?xml version="1.0" encoding="UTF-8"?>\n<data>\n${xmlRows}\n</data>`;
+        mimeType = "application/xml;charset=utf-8;";
+        fileExtension = "xml";
+        break;
+
+      case "xlsx":
+      default:
+        if (isLargeDataset) {
+          setLoadingMessage("Excel formatı hazırlanıyor...");
+          setLoadingProgress(70);
+          await new Promise((resolve) => setTimeout(resolve, baseDelay / 2));
+        }
+        // For now, XLSX will download as CSV until we add a proper XLSX library
+        content = [
+          tableData.headers.join(","),
+          ...tableData.rows.map((row) => row.join(",")),
+        ].join("\n");
+        mimeType = "text/csv;charset=utf-8;";
+        fileExtension = "csv";
+        break;
+    }
+
+    setLoadingMessage("Dosya oluşturuluyor...");
+    setLoadingProgress(85);
+    await new Promise((resolve) => setTimeout(resolve, baseDelay / 2));
+
+    const blob = new Blob([content], { type: mimeType });
+    const link = document.createElement("a");
+    const url = URL.createObjectURL(blob);
+
+    setLoadingMessage("İndirme başlatılıyor...");
+    setLoadingProgress(95);
+    await new Promise((resolve) => setTimeout(resolve, baseDelay / 4));
+
+    link.setAttribute("href", url);
+    link.setAttribute("download", `${fileName}.${fileExtension}`);
+    link.style.visibility = "hidden";
+
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    setLoadingProgress(100);
+    await new Promise((resolve) => setTimeout(resolve, 100));
+
+    setIsDownloading(false);
+    setLoadingProgress(0);
+    setLoadingMessage("");
+
+    const fileSizeKB = Math.round(blob.size / 1024);
+    toast.success(
+      `Dosya indirildi: ${fileName}.${fileExtension} dosyası başarıyla indirildi. (${fileSizeKB} KB)`
+    );
+  }, [tableData, fileName, format]);
+
+  const handleGoogleSheetsExport = useCallback(() => {
+    toast(
+      "Yakında gelecek: Google Sheets entegrasyonu üzerinde çalışıyoruz. Çok yakında kullanıma sunulacak."
+    );
+  }, []);
+
+  const SkeletonTable = () => (
+    <Card className="p-3 sm:p-6 animate-pulse">
+      <div className="h-4 sm:h-5 bg-muted rounded w-32 mb-4"></div>
+      <div className="border rounded-lg overflow-hidden">
+        <div className="bg-muted/50 p-3 border-b">
+          <div className="flex gap-4">
+            {[1, 2, 3, 4].map((i) => (
+              <div key={i} className="h-4 bg-muted rounded flex-1"></div>
+            ))}
+          </div>
         </div>
+        {[1, 2, 3, 4, 5].map((row) => (
+          <div key={row} className="p-3 border-b last:border-b-0">
+            <div className="flex gap-4">
+              {[1, 2, 3, 4].map((col) => (
+                <div key={col} className="h-3 bg-muted/70 rounded flex-1"></div>
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+    </Card>
+  );
+
+  useEffect(() => {
+    const preventDefaults = (e: DragEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+    };
+
+    const handleDocumentDrop = (e: DragEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      // Prevent file from opening in browser if dropped outside drop zone
+    };
+
+    // Prevent default drag behaviors on document
+    document.addEventListener("dragenter", preventDefaults, false);
+    document.addEventListener("dragover", preventDefaults, false);
+    document.addEventListener("dragleave", preventDefaults, false);
+    document.addEventListener("drop", handleDocumentDrop, false);
+
+    return () => {
+      document.removeEventListener("dragenter", preventDefaults, false);
+      document.removeEventListener("dragover", preventDefaults, false);
+      document.removeEventListener("dragleave", preventDefaults, false);
+      document.removeEventListener("drop", handleDocumentDrop, false);
+    };
+  }, []);
+
+  return (
+    <div
+      className="min-h-screen bg-background transition-all duration-300"
+      onKeyDown={handleKeyDown}
+      tabIndex={0}
+    >
+      {/* Hidden file input */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept=".csv"
+        onChange={handleFileUpload}
+        className="hidden"
+      />
+
+      {/* Header */}
+      <header className="py-6 sm:py-8 text-center px-4">
+        <div className="flex items-center justify-center gap-2 sm:gap-3 mb-2">
+          <FileSpreadsheet className="w-6 h-6 sm:w-8 sm:h-8 text-primary animate-pulse" />
+          <h1 className="text-2xl sm:text-4xl font-bold text-foreground">
+            Tablio
+          </h1>
+        </div>
+        <p className="text-sm sm:text-base text-muted-foreground px-4">
+          Kopyaladığınız tabloları istediğiniz formata dönüştürün
+        </p>
+      </header>
+
+      <main className="container mx-auto px-4 max-w-6xl">
+        {!tableData ? (
+          <div className="flex flex-col items-center justify-center min-h-[300px] sm:min-h-[400px]">
+            {isProcessing ? (
+              <div className="w-full max-w-4xl space-y-6 animate-in fade-in duration-500">
+                <Card className="w-full max-w-2xl mx-auto p-6 sm:p-12">
+                  <div className="text-center space-y-6">
+                    <div className="relative">
+                      <Loader2 className="w-12 h-12 sm:w-16 sm:h-16 text-primary mx-auto animate-spin" />
+                      <div className="absolute inset-0 rounded-full border-2 border-primary/20 animate-pulse"></div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <h2 className="text-xl sm:text-2xl font-semibold text-foreground">
+                        Tablo işleniyor...
+                      </h2>
+                      <p className="text-sm sm:text-base text-muted-foreground animate-pulse">
+                        {loadingMessage}
+                      </p>
+                    </div>
+
+                    <div className="space-y-3">
+                      <div className="w-full bg-muted rounded-full h-2 overflow-hidden">
+                        <div
+                          className="bg-primary h-full rounded-full transition-all duration-500 ease-out relative overflow-hidden"
+                          style={{ width: `${loadingProgress}%` }}
+                        >
+                          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent animate-pulse"></div>
+                        </div>
+                      </div>
+                      <div className="flex justify-between text-xs text-muted-foreground">
+                        <span
+                          className={
+                            loadingProgress >= 10 ? "text-primary" : ""
+                          }
+                        >
+                          Boyut Analizi
+                        </span>
+                        <span
+                          className={
+                            loadingProgress >= 20 ? "text-primary" : ""
+                          }
+                        >
+                          Tespit
+                        </span>
+                        <span
+                          className={
+                            loadingProgress >= 30 ? "text-primary" : ""
+                          }
+                        >
+                          Kontrol
+                        </span>
+                        <span
+                          className={
+                            loadingProgress >= 50 ? "text-primary" : ""
+                          }
+                        >
+                          Hazırlık
+                        </span>
+                        <span
+                          className={
+                            loadingProgress >= 75 ? "text-primary" : ""
+                          }
+                        >
+                          Tip Belirleme
+                        </span>
+                        <span
+                          className={
+                            loadingProgress >= 95 ? "text-primary" : ""
+                          }
+                        >
+                          Hazırlanıyor
+                        </span>
+                        <span
+                          className={
+                            loadingProgress >= 100 ? "text-primary" : ""
+                          }
+                        >
+                          Tamamlandı
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </Card>
+
+                <SkeletonTable />
+              </div>
+            ) : (
+              <Card
+                className={`w-full max-w-2xl p-6 sm:p-12 tablio-paste-area cursor-pointer transition-all duration-300 transform hover:scale-[1.02] border-2 border-dashed border-primary ${
+                  isDragOver
+                    ? "border-primary border-2 border-solid bg-primary/5 scale-[1.02]"
+                    : "hover:bg-primary/5 hover:shadow-lg"
+                }`}
+                onDragEnter={handleDragEnter} // Added dragenter handler
+                onDragOver={handleDragOver}
+                onDragLeave={handleDragLeave}
+                onDrop={handleDrop}
+                onClick={handlePaste}
+              >
+                <div className="text-center space-y-4">
+                  {isDragOver ? (
+                    <Upload className="w-12 h-12 sm:w-16 sm:h-16 text-primary mx-auto animate-bounce" />
+                  ) : (
+                    <Clipboard className="w-12 h-12 sm:w-16 sm:h-16 text-muted-foreground mx-auto transition-transform duration-200 hover:scale-110" />
+                  )}
+                  <h2 className="text-lg sm:text-2xl font-semibold text-foreground">
+                    {isDragOver
+                      ? "Dosyayı buraya bırakın"
+                      : "Kopyaladığınız tabloyu buraya yapıştırın"}
+                  </h2>
+                  <p className="text-sm sm:text-base text-muted-foreground px-2">
+                    {isDragOver
+                      ? "CSV dosyanızı bırakın ve otomatik olarak yüklensin"
+                      : "Excel, Google Sheets veya herhangi bir tablodan kopyaladığınız veriyi yapıştırın"}
+                  </p>
+                  {!isDragOver && (
+                    <>
+                      <div className="flex items-center justify-center gap-2 text-xs sm:text-sm text-muted-foreground">
+                        <kbd className="px-2 py-1 bg-primary/10 border border-primary/20 rounded text-xs text-primary font-semibold transition-colors hover:bg-primary/20">
+                          CTRL
+                        </kbd>
+                        <span className="text-primary font-bold">+</span>
+                        <kbd className="px-2 py-1 bg-primary/10 border border-primary/20 rounded text-xs text-primary font-semibold transition-colors hover:bg-primary/20">
+                          V
+                        </kbd>
+                        <span className="hidden sm:inline">
+                          veya buraya tıklayın
+                        </span>
+                        <span className="sm:hidden">ya da tıklayın</span>
+                      </div>
+                      <div className="pt-4">
+                        <Button
+                          variant="outline"
+                          onClick={() => fileInputRef.current?.click()}
+                          className="gap-2 transition-all duration-200 hover:scale-105 text-sm sm:text-base"
+                          size={isMobile ? "sm" : "default"}
+                        >
+                          <Upload className="w-4 h-4" />
+                          CSV Dosyası Yükle
+                        </Button>
+                      </div>
+                    </>
+                  )}
+                </div>
+              </Card>
+            )}
+          </div>
+        ) : (
+          /* Active State - Table Preview & Actions */
+          <div className="space-y-4 sm:space-y-6 animate-in fade-in duration-500">
+            {/* Mobile Controls Toggle */}
+            <div className="sm:hidden mb-4">
+              <Button
+                variant="outline"
+                onClick={() => setShowMobileControls(!showMobileControls)}
+                className="w-full gap-2 justify-center"
+              >
+                <Menu className="w-4 h-4" />
+                {showMobileControls
+                  ? "Kontrolleri Gizle"
+                  : "Kontrolleri Göster"}
+              </Button>
+            </div>
+
+            {/* Action Controls */}
+            <div
+              className={`${showMobileControls ? "block" : "hidden"} sm:block`}
+            >
+              <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-end">
+                <div className="flex-1 w-full space-y-2">
+                  <label className="text-sm font-medium text-foreground">
+                    Dosya Adı
+                  </label>
+                  <Input
+                    value={fileName}
+                    onChange={(e) => setFileName(e.target.value)}
+                    placeholder="tablio-export"
+                    className="bg-input transition-all duration-200 focus:scale-[1.02] w-full"
+                  />
+                </div>
+                <div className="w-full sm:w-auto space-y-2">
+                  <label className="text-sm font-medium text-foreground">
+                    Format
+                  </label>
+                  <Select value={format} onValueChange={setFormat}>
+                    <SelectTrigger className="w-full sm:w-40 bg-input transition-all duration-200 hover:bg-input/80">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="xlsx">Excel (XLSX)</SelectItem>
+                      <SelectItem value="csv">CSV</SelectItem>
+                      <SelectItem value="tsv">TSV</SelectItem>
+                      <SelectItem value="json">JSON</SelectItem>
+                      <SelectItem value="xml">XML</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="flex gap-2 w-full sm:w-auto">
+                  <Button
+                    variant="outline"
+                    onClick={handleClear}
+                    className="gap-2 bg-transparent transition-all duration-200 hover:scale-105 flex-1 sm:flex-none"
+                    size={window.innerWidth < 640 ? "sm" : "default"}
+                  >
+                    <Trash2 className="w-4 h-4" />
+                    <span className="sm:inline">Temizle</span>
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={handleGoogleSheetsExport}
+                    className="gap-2 bg-transparent transition-all duration-200 hover:scale-105 flex-1 sm:flex-none border-primary/50 text-primary hover:bg-primary/10 hover:border-primary"
+                    size={isMobile ? "sm" : "default"}
+                  >
+                    <FileSpreadsheet className="w-4 h-4" />
+                    <span className="hidden sm:inline">Google Sheets</span>
+                    <span className="sm:hidden">Sheets</span>
+                  </Button>
+                  <Button
+                    onClick={handleDownload}
+                    disabled={isDownloading}
+                    className="gap-2 bg-primary hover:bg-primary/90 transition-all duration-200 hover:scale-105 disabled:scale-100 flex-1 sm:flex-none"
+                    size={window.innerWidth < 640 ? "sm" : "default"}
+                  >
+                    {isDownloading ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <Download className="w-4 h-4" />
+                    )}
+                    {isDownloading ? "İndiriliyor..." : "İndir"}
+                  </Button>
+                </div>
+              </div>
+            </div>
+
+            {isDownloading && (
+              <Card className="p-4 border-primary/50 bg-primary/5 animate-in fade-in duration-200">
+                <div className="flex items-center gap-3">
+                  <Loader2 className="w-5 h-5 text-primary animate-spin" />
+                  <div className="flex-1">
+                    <p className="text-sm font-medium text-foreground">
+                      {loadingMessage}
+                    </p>
+                    <div className="w-full bg-muted rounded-full h-2 mt-2">
+                      <div
+                        className="bg-primary h-full rounded-full transition-all duration-300 ease-out"
+                        style={{ width: `${loadingProgress}%` }}
+                      ></div>
+                    </div>
+                    <div className="flex justify-between text-xs text-muted-foreground mt-1">
+                      <span>İndiriliyor...</span>
+                      <span>{loadingProgress}%</span>
+                    </div>
+                  </div>
+                </div>
+              </Card>
+            )}
+
+            <Card className="p-4 transition-all duration-200 hover:shadow-md">
+              <div className="flex flex-col sm:flex-row sm:flex-wrap gap-2 sm:gap-2">
+                <div className="flex gap-2 w-full sm:w-auto">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={addRow}
+                    className="gap-2 bg-transparent transition-all duration-200 hover:scale-105 flex-1 sm:flex-none touch-manipulation"
+                  >
+                    <Plus className="w-4 h-4" />
+                    <span className="text-xs sm:text-sm">Satır Ekle</span>
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={addColumn}
+                    className="gap-2 bg-transparent transition-all duration-200 hover:scale-105 flex-1 sm:flex-none touch-manipulation"
+                  >
+                    <Plus className="w-4 h-4" />
+                    <span className="text-xs sm:text-sm">Sütun Ekle</span>
+                  </Button>
+                </div>
+                <div className="flex items-center gap-2 text-xs sm:text-sm text-muted-foreground justify-center sm:justify-start">
+                  <Edit3 className="w-4 h-4" />
+                  <span className="text-center sm:text-left">
+                    Hücrelere tıklayarak düzenleyebilirsiniz
+                  </span>
+                </div>
+              </div>
+            </Card>
+
+            <Card className="p-3 sm:p-6 transition-all duration-200 hover:shadow-md">
+              <h3 className="text-base sm:text-lg font-semibold text-foreground mb-3 sm:mb-4">
+                Tablo Önizleme
+              </h3>
+
+              {/* Mobile table wrapper with horizontal scroll */}
+              <div className="tablio-table border rounded-lg overflow-x-auto -mx-3 sm:mx-0">
+                <div className="min-w-max sm:min-w-0">
+                  <table className="w-full">
+                    <thead>
+                      <tr className="border-b bg-muted/50">
+                        {tableData.headers.map((header, index) => (
+                          <th
+                            key={index}
+                            className="text-left p-2 sm:p-3 font-medium text-foreground relative group min-w-[120px] sm:min-w-0"
+                          >
+                            <div
+                              className="truncate pr-6 sm:pr-8"
+                              title={header}
+                            >
+                              {header}
+                            </div>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => removeColumn(index)}
+                              className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-all duration-200 w-5 h-5 sm:w-6 sm:h-6 p-0 hover:bg-destructive hover:text-destructive-foreground hover:scale-110 touch-manipulation"
+                            >
+                              <Minus className="w-2 h-2 sm:w-3 sm:h-3" />
+                            </Button>
+                          </th>
+                        ))}
+                        <th className="w-8 sm:w-10"></th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {tableData.rows.map((row, rowIndex) => (
+                        <tr
+                          key={rowIndex}
+                          className="border-b hover:bg-muted/30 group transition-colors duration-200"
+                        >
+                          {row.map((cell, cellIndex) => (
+                            <td
+                              key={cellIndex}
+                              className="p-2 sm:p-3 text-foreground relative min-w-[120px] sm:min-w-0"
+                            >
+                              {editingCell?.row === rowIndex &&
+                              editingCell?.col === cellIndex ? (
+                                <div className="flex gap-1 animate-in fade-in duration-200">
+                                  <Input
+                                    value={editValue}
+                                    onChange={(e) =>
+                                      setEditValue(e.target.value)
+                                    }
+                                    onKeyDown={(e) => {
+                                      if (e.key === "Enter") handleCellSave();
+                                      if (e.key === "Escape")
+                                        handleCellCancel();
+                                    }}
+                                    className="h-7 sm:h-8 text-xs sm:text-sm min-w-0"
+                                    autoFocus
+                                  />
+                                  <Button
+                                    size="sm"
+                                    onClick={handleCellSave}
+                                    className="h-7 sm:h-8 px-1 sm:px-2 transition-all duration-200 hover:scale-110 touch-manipulation text-xs"
+                                  >
+                                    ✓
+                                  </Button>
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={handleCellCancel}
+                                    className="h-7 sm:h-8 px-1 sm:px-2 bg-transparent transition-all duration-200 hover:scale-110 touch-manipulation text-xs"
+                                  >
+                                    ✕
+                                  </Button>
+                                </div>
+                              ) : (
+                                <div
+                                  className="cursor-pointer hover:bg-muted/50 rounded px-1 sm:px-2 py-1 -mx-1 sm:-mx-2 -my-1 transition-all duration-200 hover:scale-[1.02] touch-manipulation min-h-[32px] sm:min-h-[36px] flex items-center"
+                                  onClick={() =>
+                                    handleCellClick(rowIndex, cellIndex, cell)
+                                  }
+                                >
+                                  <span
+                                    className="truncate text-xs sm:text-sm"
+                                    title={cell}
+                                  >
+                                    {cell || (
+                                      <span className="text-muted-foreground italic">
+                                        Boş
+                                      </span>
+                                    )}
+                                  </span>
+                                </div>
+                              )}
+                            </td>
+                          ))}
+                          <td className="p-2 sm:p-3 w-8 sm:w-10">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => removeRow(rowIndex)}
+                              className="opacity-0 group-hover:opacity-100 transition-all duration-200 w-5 h-5 sm:w-6 sm:h-6 p-0 hover:bg-destructive hover:text-destructive-foreground hover:scale-110 touch-manipulation"
+                            >
+                              <Minus className="w-2 h-2 sm:w-3 sm:h-3" />
+                            </Button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              <p className="text-xs sm:text-sm text-muted-foreground mt-3 animate-in fade-in duration-300 text-center sm:text-left">
+                {tableData.rows.length} satır, {tableData.headers.length} sütun
+              </p>
+            </Card>
+          </div>
+        )}
       </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
+
+      <footer className="mt-12 sm:mt-16 py-6 sm:py-8 text-center border-t">
+        <div className="container mx-auto px-4">
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-4 text-xs sm:text-sm text-muted-foreground">
+            <a
+              href="#"
+              className="hover:text-primary transition-colors duration-200 touch-manipulation"
+            >
+              Nasıl Kullanılır?
+            </a>
+            <span className="hidden sm:inline">•</span>
+            <a
+              href="#"
+              className="hover:text-primary transition-colors duration-200 touch-manipulation"
+            >
+              Hakkında
+            </a>
+            <span className="hidden sm:inline">•</span>
+            <span className="text-center">
+              Tablio ile tablolarınızı kolayca dönüştürün
+            </span>
+          </div>
+        </div>
       </footer>
     </div>
   );
