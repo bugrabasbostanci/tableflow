@@ -45,78 +45,53 @@ export default function TablioApp() {
 
       const stats = getTableStats(parsed);
       const isLargeDataset = stats.isLargeDataset;
-      const baseDelay = isLargeDataset ? 150 : 50; // Longer delays for large datasets
 
-      setLoadingMessage("Veri boyutu analiz ediliyor...");
-      setLoadingProgress(10);
-      await new Promise((resolve) => setTimeout(resolve, baseDelay));
+      setLoadingMessage("Veri analiz ediliyor...");
+      setLoadingProgress(20);
 
       if (isLargeDataset) {
-        setLoadingMessage("Büyük veri seti tespit edildi...");
-        setLoadingProgress(20);
-        await new Promise((resolve) => setTimeout(resolve, baseDelay));
-      }
-
-      setLoadingMessage("Tablo yapısı kontrol ediliyor...");
-      setLoadingProgress(isLargeDataset ? 30 : 25);
-      await new Promise((resolve) => setTimeout(resolve, baseDelay));
-
-      if (isLargeDataset) {
-        const chunkSize = 100;
+        setLoadingMessage("Büyük veri seti işleniyor...");
+        setLoadingProgress(40);
+        
+        // For large datasets, allow UI updates during processing
+        const chunkSize = 1000;
         const totalChunks = Math.ceil(parsed.rows.length / chunkSize);
 
         for (let i = 0; i < totalChunks; i++) {
-          setLoadingMessage(`Satırlar işleniyor... (${i + 1}/${totalChunks})`);
-          setLoadingProgress(30 + (i / totalChunks) * 50);
+          setLoadingMessage(`Veriler işleniyor... (${i + 1}/${totalChunks})`);
+          setLoadingProgress(40 + (i / totalChunks) * 40);
 
-          // Simulate chunk processing
-          await new Promise((resolve) =>
-            setTimeout(resolve, Math.min(baseDelay, 100))
-          );
-
-          // Allow UI to update
-          if (i % 5 === 0) {
+          // Allow UI to update every few chunks
+          if (i % 10 === 0) {
             await new Promise((resolve) => requestAnimationFrame(resolve));
           }
         }
       } else {
-        setLoadingMessage("Satırlar işleniyor...");
-        setLoadingProgress(50);
-        await new Promise((resolve) => setTimeout(resolve, baseDelay));
+        setLoadingProgress(60);
       }
 
-      setLoadingMessage("Sütun tipleri belirleniyor...");
-      setLoadingProgress(isLargeDataset ? 85 : 75);
-      await new Promise((resolve) => setTimeout(resolve, baseDelay));
-
       setLoadingMessage("Tablo hazırlanıyor...");
-      setLoadingProgress(90);
-      await new Promise((resolve) => setTimeout(resolve, baseDelay / 2));
+      setLoadingProgress(80);
 
       setTableData(parsed);
       if (fileName) {
         setFileName(fileName);
       }
 
-      setLoadingMessage("Render ediliyor...");
+      setLoadingMessage("Tamamlanıyor...");
       setLoadingProgress(95);
 
-      await new Promise((resolve) => requestAnimationFrame(resolve));
+      // Allow final UI update
       await new Promise((resolve) => requestAnimationFrame(resolve));
 
-      if (isLargeDataset) {
-        await new Promise((resolve) => setTimeout(resolve, 200));
-      } else {
-        await new Promise((resolve) => setTimeout(resolve, 100));
-      }
-
-      setLoadingMessage("Tamamlandı!");
       setLoadingProgress(100);
-      await new Promise((resolve) => setTimeout(resolve, 300));
-
-      setIsProcessing(false);
-      setLoadingProgress(0);
-      setLoadingMessage("");
+      
+      // Brief completion state
+      setTimeout(() => {
+        setIsProcessing(false);
+        setLoadingProgress(0);
+        setLoadingMessage("");
+      }, 150);
 
       const finalStats = getTableStats(parsed);
       toast.success(
@@ -162,53 +137,24 @@ export default function TablioApp() {
 
     const stats = getTableStats(tableData);
     const isLargeDataset = stats.isLargeDataset;
-    const isComplexFormat =
-      format === "json" || format === "pdf" || format === "html";
-    const baseDelay = isLargeDataset
-      ? isComplexFormat
-        ? 200
-        : 150
-      : isComplexFormat
-      ? 100
-      : 50;
-
-    setLoadingMessage("Dosya hazırlığı başlatılıyor...");
-    setLoadingProgress(10);
-    await new Promise((resolve) => setTimeout(resolve, baseDelay / 2));
 
     setLoadingMessage(`${format.toUpperCase()} formatına dönüştürülüyor...`);
-    setLoadingProgress(30);
-    await new Promise((resolve) => setTimeout(resolve, baseDelay));
-
-    if (isLargeDataset) {
-      setLoadingMessage("Veri yapısı oluşturuluyor...");
-      setLoadingProgress(50);
-      await new Promise((resolve) => setTimeout(resolve, baseDelay));
-    }
-
-    // Format-specific loading messages
-    const formatMessages: Record<ExportFormat, string> = {
-      csv: "CSV dosyası oluşturuluyor...",
-      xlsx: "Excel dosyası oluşturuluyor...",
-      pdf: "PDF raporu hazırlanıyor...",
-      html: "HTML tablosu oluşturuluyor...",
-      json: "JSON verisi hazırlanıyor...",
-    };
-
-    if (isLargeDataset) {
-      setLoadingMessage(formatMessages[format]);
-      setLoadingProgress(70);
-      await new Promise((resolve) => setTimeout(resolve, baseDelay / 2));
-    }
+    setLoadingProgress(25);
 
     const { content, mimeType, fileExtension } = await formatTableData(
       tableData,
       format
     );
 
-    setLoadingMessage("Dosya oluşturuluyor...");
-    setLoadingProgress(85);
-    await new Promise((resolve) => setTimeout(resolve, baseDelay / 2));
+    if (isLargeDataset) {
+      setLoadingMessage("Büyük dosya oluşturuluyor...");
+      setLoadingProgress(60);
+      // Allow UI update for large files
+      await new Promise((resolve) => requestAnimationFrame(resolve));
+    }
+
+    setLoadingMessage("Dosya hazırlanıyor...");
+    setLoadingProgress(80);
 
     const blob = new Blob([content as BlobPart], { type: mimeType });
     const link = document.createElement("a");
@@ -216,7 +162,6 @@ export default function TablioApp() {
 
     setLoadingMessage("İndirme başlatılıyor...");
     setLoadingProgress(95);
-    await new Promise((resolve) => setTimeout(resolve, baseDelay / 4));
 
     link.setAttribute("href", url);
     link.setAttribute("download", `${fileName}.${fileExtension}`);
@@ -227,11 +172,13 @@ export default function TablioApp() {
     document.body.removeChild(link);
 
     setLoadingProgress(100);
-    await new Promise((resolve) => setTimeout(resolve, 100));
-
-    setIsDownloading(false);
-    setLoadingProgress(0);
-    setLoadingMessage("");
+    
+    // Brief completion state
+    setTimeout(() => {
+      setIsDownloading(false);
+      setLoadingProgress(0);
+      setLoadingMessage("");
+    }, 150);
 
     const fileSizeKB = Math.round(blob.size / 1024);
     toast.success(
@@ -371,7 +318,7 @@ export default function TablioApp() {
                     variant="outline"
                     onClick={handleClear}
                     className="gap-2 bg-transparent transition-all duration-200 hover:scale-105 flex-1 sm:flex-none"
-                    size={window.innerWidth < 640 ? "sm" : "default"}
+                    size={isMobile ? "sm" : "default"}
                   >
                     <Trash2 className="w-4 h-4" />
                     <span className="sm:inline">Temizle</span>
@@ -390,7 +337,7 @@ export default function TablioApp() {
                     onClick={handleDownload}
                     disabled={isDownloading}
                     className="gap-2 bg-primary hover:bg-primary/90 transition-all duration-200 hover:scale-105 disabled:scale-100 flex-1 sm:flex-none"
-                    size={window.innerWidth < 640 ? "sm" : "default"}
+                    size={isMobile ? "sm" : "default"}
                   >
                     {isDownloading ? (
                       <Loader2 className="w-4 h-4 animate-spin" />
