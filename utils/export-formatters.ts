@@ -3,6 +3,7 @@ import * as XLSX from "xlsx";
 import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable";
 import { loadTurkishFont } from "./turkish-font-base64";
+import type { AutoTableOptions } from "@/types/jspdf-autotable";
 
 /**
  * Fixes Turkish characters for PDF when custom font is not available
@@ -216,7 +217,9 @@ export async function formatAsPDF(tableData: TableData): Promise<ExportResult> {
       tableWidth: availableWidth,
       didDrawPage: function (data) {
         // Footer with page numbers - force font here too
-        const pageCount = (doc as any).internal.getNumberOfPages();
+        // Type-safe way to get page count
+        const docInternal = doc.internal as any;
+        const pageCount = docInternal.getNumberOfPages();
         const pageSize = doc.internal.pageSize;
         const pageHeight = pageSize.height || pageSize.getHeight();
 

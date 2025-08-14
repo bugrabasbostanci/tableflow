@@ -2,19 +2,12 @@
 
 import type React from "react";
 
-import { useState, useCallback, useEffect } from "react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Download, Trash2, FileSpreadsheet, Loader2, Menu } from "lucide-react";
+import { useState, useCallback } from "react";
+import { AppHeader } from "@/components/tablio/layout/AppHeader";
+import { ExportControls } from "@/components/tablio/layout/ExportControls";
+import { MobileControlsToggle } from "@/components/tablio/layout/MobileControlsToggle";
+import { AppFooter } from "@/components/tablio/layout/AppFooter";
 import { toast } from "sonner";
-import { useIsMobile } from "@/hooks/use-mobile";
 import type { TableData, ExportFormat } from "@/types/tablio";
 import { formatTableData } from "@/utils/export-formatters";
 import { getTableStats } from "@/utils/table-operations";
@@ -36,7 +29,6 @@ export default function TablioApp() {
   const [showMobileControls, setShowMobileControls] = useState(false);
   const [loadingProgress, setLoadingProgress] = useState(0);
   const [loadingMessage, setLoadingMessage] = useState("");
-  const isMobile = useIsMobile();
 
   const processData = useCallback(
     async (parsed: TableData, fileName?: string) => {
@@ -192,31 +184,6 @@ export default function TablioApp() {
     );
   }, []);
 
-  useEffect(() => {
-    const preventDefaults = (e: DragEvent) => {
-      e.preventDefault();
-      e.stopPropagation();
-    };
-
-    const handleDocumentDrop = (e: DragEvent) => {
-      e.preventDefault();
-      e.stopPropagation();
-      // Prevent file from opening in browser if dropped outside drop zone
-    };
-
-    // Prevent default drag behaviors on document
-    document.addEventListener("dragenter", preventDefaults, false);
-    document.addEventListener("dragover", preventDefaults, false);
-    document.addEventListener("dragleave", preventDefaults, false);
-    document.addEventListener("drop", handleDocumentDrop, false);
-
-    return () => {
-      document.removeEventListener("dragenter", preventDefaults, false);
-      document.removeEventListener("dragover", preventDefaults, false);
-      document.removeEventListener("dragleave", preventDefaults, false);
-      document.removeEventListener("drop", handleDocumentDrop, false);
-    };
-  }, []);
 
   return (
     <div
@@ -224,18 +191,7 @@ export default function TablioApp() {
       onKeyDown={handleKeyDown}
       tabIndex={0}
     >
-      {/* Header */}
-      <header className="py-6 sm:py-8 text-center px-4">
-        <div className="flex items-center justify-center gap-2 sm:gap-3 mb-2">
-          <FileSpreadsheet className="w-6 h-6 sm:w-8 sm:h-8 text-primary animate-pulse" />
-          <h1 className="text-2xl sm:text-4xl font-bold text-foreground">
-            Tablio
-          </h1>
-        </div>
-        <p className="text-sm sm:text-base text-muted-foreground px-4">
-          Kopyaladığınız tabloları istediğiniz formata dönüştürün
-        </p>
-      </header>
+      <AppHeader />
 
       <main className="container mx-auto px-4 max-w-6xl">
         {!tableData ? (
@@ -251,104 +207,28 @@ export default function TablioApp() {
             ) : (
               <DataInput
                 onPaste={dataInputProps.handlePaste}
-                onFileUpload={dataInputProps.handleFileUpload}
-                isDragOver={dataInputProps.isDragOver}
-                onDragEnter={dataInputProps.handleDragEnter}
-                onDragOver={dataInputProps.handleDragOver}
-                onDragLeave={dataInputProps.handleDragLeave}
-                onDrop={dataInputProps.handleDrop}
               />
             )}
           </div>
         ) : (
           /* Active State - Table Preview & Actions */
           <div className="space-y-4 sm:space-y-6 animate-in fade-in duration-500">
-            {/* Mobile Controls Toggle */}
-            <div className="sm:hidden mb-4">
-              <Button
-                variant="outline"
-                onClick={() => setShowMobileControls(!showMobileControls)}
-                className="w-full gap-2 justify-center"
-              >
-                <Menu className="w-4 h-4" />
-                {showMobileControls
-                  ? "Kontrolleri Gizle"
-                  : "Kontrolleri Göster"}
-              </Button>
-            </div>
+            <MobileControlsToggle
+              showMobileControls={showMobileControls}
+              onToggle={() => setShowMobileControls(!showMobileControls)}
+            />
 
-            {/* Action Controls */}
-            <div
-              className={`${showMobileControls ? "block" : "hidden"} sm:block`}
-            >
-              <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-end">
-                <div className="flex-1 w-full space-y-2">
-                  <label className="text-sm font-medium text-foreground">
-                    Dosya Adı
-                  </label>
-                  <Input
-                    value={fileName}
-                    onChange={(e) => setFileName(e.target.value)}
-                    placeholder="tablio-file"
-                    className="bg-input transition-all duration-200 focus:scale-[1.02] w-full"
-                  />
-                </div>
-                <div className="w-full sm:w-auto space-y-2">
-                  <label className="text-sm font-medium text-foreground">
-                    Format
-                  </label>
-                  <Select
-                    value={format}
-                    onValueChange={(value: ExportFormat) => setFormat(value)}
-                  >
-                    <SelectTrigger className="w-full sm:w-40 bg-input transition-all duration-200 hover:bg-input/80">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="xlsx">Excel (XLSX)</SelectItem>
-                      <SelectItem value="csv">CSV</SelectItem>
-                      <SelectItem value="pdf">PDF </SelectItem>
-                      <SelectItem value="html">HTML Tablo</SelectItem>
-                      <SelectItem value="json">JSON</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="flex gap-2 w-full sm:w-auto">
-                  <Button
-                    variant="outline"
-                    onClick={handleClear}
-                    className="gap-2 bg-transparent transition-all duration-200 hover:scale-105 flex-1 sm:flex-none"
-                    size={isMobile ? "sm" : "default"}
-                  >
-                    <Trash2 className="w-4 h-4" />
-                    <span className="sm:inline">Temizle</span>
-                  </Button>
-                  <Button
-                    variant="outline"
-                    onClick={handleGoogleSheetsExport}
-                    className="gap-2 bg-transparent transition-all duration-200 hover:scale-105 flex-1 sm:flex-none border-primary/50 text-primary hover:bg-primary/10 hover:border-primary"
-                    size={isMobile ? "sm" : "default"}
-                  >
-                    <FileSpreadsheet className="w-4 h-4" />
-                    <span className="hidden sm:inline">Google Sheets</span>
-                    <span className="sm:hidden">Sheets</span>
-                  </Button>
-                  <Button
-                    onClick={handleDownload}
-                    disabled={isDownloading}
-                    className="gap-2 bg-primary hover:bg-primary/90 transition-all duration-200 hover:scale-105 disabled:scale-100 flex-1 sm:flex-none"
-                    size={isMobile ? "sm" : "default"}
-                  >
-                    {isDownloading ? (
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                    ) : (
-                      <Download className="w-4 h-4" />
-                    )}
-                    {isDownloading ? "İndiriliyor..." : "İndir"}
-                  </Button>
-                </div>
-              </div>
-            </div>
+            <ExportControls
+              fileName={fileName}
+              setFileName={setFileName}
+              format={format}
+              setFormat={setFormat}
+              onClear={handleClear}
+              onDownload={handleDownload}
+              onGoogleSheetsExport={handleGoogleSheetsExport}
+              isDownloading={isDownloading}
+              showMobileControls={showMobileControls}
+            />
 
             {isDownloading && (
               <DownloadLoadingOverlay
@@ -377,29 +257,7 @@ export default function TablioApp() {
         )}
       </main>
 
-      <footer className="mt-12 sm:mt-16 py-6 sm:py-8 text-center border-t">
-        <div className="container mx-auto px-4">
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-4 text-xs sm:text-sm text-muted-foreground">
-            <a
-              href="#"
-              className="hover:text-primary transition-colors duration-200 touch-manipulation"
-            >
-              Nasıl Kullanılır?
-            </a>
-            <span className="hidden sm:inline">•</span>
-            <a
-              href="#"
-              className="hover:text-primary transition-colors duration-200 touch-manipulation"
-            >
-              Hakkında
-            </a>
-            <span className="hidden sm:inline">•</span>
-            <span className="text-center">
-              Tablio ile tablolarınızı kolayca dönüştürün
-            </span>
-          </div>
-        </div>
-      </footer>
+      <AppFooter />
     </div>
   );
 }

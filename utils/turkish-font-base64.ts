@@ -13,7 +13,9 @@ const ROBOTO_FONT_BASE64 = `AAEAAAASAQAABAAgR0RFRqZDpEwAAAOUAAACWEdQT1MH0trkAABd
  * @param doc - jsPDF document instance
  * @returns boolean indicating success
  */
-export async function loadTurkishFont(doc: any): Promise<boolean> {
+import { jsPDF } from 'jspdf';
+
+export async function loadTurkishFont(doc: jsPDF): Promise<boolean> {
   // Check if real font base64 is available
   const hasRealFont =
     ROBOTO_FONT_BASE64.trim().length > 1000 &&
