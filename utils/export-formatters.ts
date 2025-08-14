@@ -2,32 +2,17 @@ import type { TableData, ExportFormat, ExportResult } from "@/types/tablio";
 import * as XLSX from "xlsx";
 import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable";
-import { loadTurkishFont } from "./turkish-font-base64";
 import type { AutoTableOptions } from "@/types/jspdf-autotable";
-
-/**
- * Fixes Turkish characters for PDF when custom font is not available
- * Uses clean, readable Latin equivalents
- * ONLY called when Turkish font definitely fails to load
- */
-function fixTurkishCharsForPDF(text: string): string {
-  return (
-    text
-      // Turkish character fixes - clean and readable
-      .replace(/ş/g, "s") // ş → s
-      .replace(/Ş/g, "S") // Ş → S
-      .replace(/ç/g, "c") // ç → c
-      .replace(/Ç/g, "C") // Ç → C
-      .replace(/ğ/g, "g") // ğ → g
-      .replace(/Ğ/g, "G") // Ğ → G
-      .replace(/ü/g, "u") // ü → u
-      .replace(/Ü/g, "U") // Ü → U
-      .replace(/ö/g, "o") // ö → o
-      .replace(/Ö/g, "O") // Ö → O
-      .replace(/ı/g, "i") // ı → i
-      .replace(/İ/g, "I") // İ → I
-  );
-}
+import { 
+  setupPDFFont, 
+  createTurkishPDF, 
+  addPDFHeader, 
+  processTextForPDF,
+  fixTurkishCharsForPDF,
+  applyFontToPDF,
+  createFontHooks,
+  createPDFFooter
+} from "./pdf-font-utils";
 
 /**
  * Formats table data as CSV
@@ -93,76 +78,35 @@ export function formatAsXLSX(tableData: TableData): ExportResult {
  */
 export async function formatAsPDF(tableData: TableData): Promise<ExportResult> {
   try {
-    // Create PDF with Turkish font support
-    const doc = new jsPDF({
-      orientation: "landscape",
-      unit: "pt",
-      format: "a4",
-      putOnlyUsedFonts: true,
-      compress: true,
-    });
+    // Create PDF document with standard Turkish configuration
+    const doc = createTurkishPDF();
 
-    // Load Turkish-compatible Roboto font from Base64
-    let fontLoaded = false;
-    let fontName = "helvetica"; // Default fallback
+    // Setup font with Turkish support
+    const fontConfig = await setupPDFFont(doc);
 
-    try {
-      fontLoaded = await loadTurkishFont(doc);
-      fontName = "helvetica"; // Always use helvetica as loadTurkishFont registers with helvetica encoding
-      doc.setLanguage("tr");
-
-      if (fontLoaded) {
-        console.log("Turkish font loaded successfully with Base64 data");
-      } else {
-        console.log("Using fallback helvetica font");
-      }
-    } catch (error) {
-      console.warn("Failed to load Turkish font from Base64:", error);
-      doc.setFont("helvetica");
-      fontLoaded = false;
-      fontName = "helvetica";
-    }
-
-    // Add title
-    doc.setFontSize(16);
-    doc.text("Tablio Raporu", 20, 20);
-
-    // Add generation date
-    const dateText = new Date().toLocaleDateString("tr-TR", {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-    doc.setFontSize(10);
-    doc.text(dateText, 20, 30);
+    // Add standard header with title and date
+    addPDFHeader(doc, fontConfig);
 
     // Get page dimensions
     const pageWidth = doc.internal.pageSize.getWidth();
     const availableWidth = pageWidth - 30; // 15mm margins
 
-    // Prepare table data - apply character fixes only if Roboto font failed to load
-    let headers = tableData.headers;
-    let rows = tableData.rows;
+    // Process table data with font-appropriate character handling
+    const headers = tableData.headers.map(header => processTextForPDF(header, fontConfig));
+    const rows = tableData.rows.map(row => 
+      row.map(cell => processTextForPDF(cell, fontConfig))
+    );
 
-    if (!fontLoaded) {
-      console.warn("Roboto font not loaded from Base64, applying Turkish character fixes");
-      headers = tableData.headers.map(fixTurkishCharsForPDF);
-      rows = tableData.rows.map((row) => row.map(fixTurkishCharsForPDF));
-    } else {
-      console.log(
-        "Roboto font loaded successfully from Base64, Turkish characters will render correctly"
-      );
-    }
+    // Generate font hooks for consistent font application
+    const fontHooks = createFontHooks(fontConfig);
 
-    // Create table with autoTable using Roboto font
+    // Create table with autoTable
     autoTable(doc, {
       head: [headers],
       body: rows,
       startY: 40,
       styles: {
-        font: fontName,
+        font: fontConfig.fontName,
         fontSize: 9,
         cellPadding: 4,
         overflow: "linebreak",
@@ -177,33 +121,17 @@ export async function formatAsPDF(tableData: TableData): Promise<ExportResult> {
         textColor: 255,
         fontSize: 9,
         fontStyle: "normal",
-        font: fontName,
+        font: fontConfig.fontName,
         minCellHeight: 20,
         valign: "middle",
         halign: "center",
       },
       bodyStyles: {
-        font: fontName,
+        font: fontConfig.fontName,
       },
       alternateRowStyles: {
         fillColor: [250, 250, 250],
-        font: fontName,
-      },
-      // Force correct font in ALL drawing hooks
-      didParseCell: function (data) {
-        if (fontLoaded) {
-          data.doc.setFont(fontName);
-        }
-      },
-      willDrawCell: function (data) {
-        if (fontLoaded) {
-          data.doc.setFont(fontName);
-        }
-      },
-      didDrawCell: function (data) {
-        if (fontLoaded) {
-          data.doc.setFont(fontName);
-        }
+        font: fontConfig.fontName,
       },
       margin: {
         top: 20,
@@ -215,35 +143,8 @@ export async function formatAsPDF(tableData: TableData): Promise<ExportResult> {
       pageBreak: "auto",
       showHead: "everyPage",
       tableWidth: availableWidth,
-      didDrawPage: function (data) {
-        // Footer with page numbers - force font here too
-        // Type-safe way to get page count
-        const docInternal = doc.internal as any;
-        const pageCount = docInternal.getNumberOfPages();
-        const pageSize = doc.internal.pageSize;
-        const pageHeight = pageSize.height || pageSize.getHeight();
-
-        // Force correct font before drawing text
-        if (fontLoaded) {
-          doc.setFont(fontName);
-        }
-        doc.setFontSize(8);
-        doc.setTextColor(100, 100, 100);
-
-        // Page number
-        doc.text(
-          `Sayfa ${data.pageNumber} / ${pageCount}`,
-          data.settings.margin.left,
-          pageHeight - 8
-        );
-
-        // Summary info
-        doc.text(
-          `${tableData.rows.length} kayıt • ${tableData.headers.length} sütun`,
-          pageWidth - 50,
-          pageHeight - 8
-        );
-      },
+      didDrawPage: createPDFFooter(fontConfig, tableData),
+      ...fontHooks,
     });
 
     // Generate PDF buffer
@@ -257,30 +158,30 @@ export async function formatAsPDF(tableData: TableData): Promise<ExportResult> {
   } catch (error) {
     console.error("PDF generation failed:", error);
 
-    // Fallback with character replacement
-    const doc = new jsPDF({
+    // Fallback with basic configuration and character fixes
+    const fallbackDoc = new jsPDF({
       orientation: "landscape",
-      unit: "mm",
+      unit: "mm", 
       format: "a4",
     });
 
-    doc.setFont("helvetica");
-    doc.text("Tablio Raporu", 20, 20);
+    fallbackDoc.setFont("helvetica");
+    fallbackDoc.text("Tablio Raporu", 20, 20);
 
-    // Apply character fixes in fallback
+    // Apply character fixes for fallback
     const processedHeaders = tableData.headers.map(fixTurkishCharsForPDF);
-    const processedRows = tableData.rows.map((row) =>
+    const processedRows = tableData.rows.map(row => 
       row.map(fixTurkishCharsForPDF)
     );
 
-    autoTable(doc, {
+    autoTable(fallbackDoc, {
       head: [processedHeaders],
       body: processedRows,
       startY: 30,
       styles: { font: "helvetica", fontSize: 8 },
     });
 
-    const fallbackBuffer = new Uint8Array(doc.output("arraybuffer"));
+    const fallbackBuffer = new Uint8Array(fallbackDoc.output("arraybuffer"));
 
     return {
       content: fallbackBuffer,

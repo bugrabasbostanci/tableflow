@@ -16,6 +16,7 @@ export interface LoadingState {
   isLoading: boolean;
   progress: number;
   message: string;
+  type: 'idle' | 'processing' | 'downloading';
 }
 
 export interface ExportOptions {
@@ -34,4 +35,27 @@ export interface ExportResult {
 export interface ProcessingOptions {
   baseDelay?: number;
   isLargeDataset?: boolean;
+}
+
+/**
+ * Google Sheets integration types
+ */
+export interface GoogleOAuthState {
+  isAuthenticated: boolean;
+  accessToken?: string;
+  refreshToken?: string;
+  expiryDate?: number;
+}
+
+export interface GoogleSheetsExportOptions {
+  title?: string;
+  sheetName?: string;
+  makePublic?: boolean;
+}
+
+export interface GoogleSheetsExportResult {
+  spreadsheetId: string;
+  spreadsheetUrl: string;
+  success: boolean;
+  message: string;
 }

@@ -82,12 +82,21 @@ export function ExportControls({
           <Button
             variant="outline"
             onClick={onGoogleSheetsExport}
-            className="gap-2 bg-transparent transition-all duration-200 hover:scale-105 flex-1 sm:flex-none border-primary/50 text-primary hover:bg-primary/10 hover:border-primary"
+            disabled={isDownloading}
+            className="gap-2 bg-transparent transition-all duration-200 hover:scale-105 disabled:scale-100 flex-1 sm:flex-none border-primary/50 text-primary hover:bg-primary/10 hover:border-primary disabled:opacity-50"
             size={isMobile === true ? "sm" : "default"}
           >
-            <FileSpreadsheet className="w-4 h-4" />
-            <span className="hidden sm:inline">Google Sheets</span>
-            <span className="sm:hidden">Sheets</span>
+            {isDownloading ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <FileSpreadsheet className="w-4 h-4" />
+            )}
+            <span className="hidden sm:inline">
+              {isDownloading ? "Aktarılıyor..." : "Google Sheets"}
+            </span>
+            <span className="sm:hidden">
+              {isDownloading ? "Aktarılıyor..." : "Sheets"}
+            </span>
           </Button>
           <Button
             onClick={onDownload}

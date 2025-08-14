@@ -1,4 +1,4 @@
-import type { TableData } from '@/types/tablio';
+import type { TableData } from "@/types/tablio";
 
 /**
  * Adds a new row to the table data
@@ -14,9 +14,12 @@ export function addRowToTable(tableData: TableData): TableData {
 /**
  * Removes a row from the table data
  */
-export function removeRowFromTable(tableData: TableData, rowIndex: number): TableData | null {
+export function removeRowFromTable(
+  tableData: TableData,
+  rowIndex: number
+): TableData | null {
   if (tableData.rows.length <= 1) return null; // Don't allow removing the last row
-  
+
   return {
     ...tableData,
     rows: tableData.rows.filter((_, index) => index !== rowIndex),
@@ -26,7 +29,10 @@ export function removeRowFromTable(tableData: TableData, rowIndex: number): Tabl
 /**
  * Adds a new column to the table data
  */
-export function addColumnToTable(tableData: TableData, headerName?: string): TableData {
+export function addColumnToTable(
+  tableData: TableData,
+  headerName?: string
+): TableData {
   const newHeader = headerName || `Sütun ${tableData.headers.length + 1}`;
   return {
     headers: [...tableData.headers, newHeader],
@@ -37,7 +43,10 @@ export function addColumnToTable(tableData: TableData, headerName?: string): Tab
 /**
  * Removes a column from the table data
  */
-export function removeColumnFromTable(tableData: TableData, colIndex: number): TableData | null {
+export function removeColumnFromTable(
+  tableData: TableData,
+  colIndex: number
+): TableData | null {
   if (tableData.headers.length <= 1) return null; // Don't allow removing the last column
 
   return {
@@ -52,35 +61,18 @@ export function removeColumnFromTable(tableData: TableData, colIndex: number): T
  * Updates a specific cell in the table data
  */
 export function updateTableCell(
-  tableData: TableData, 
-  rowIndex: number, 
-  colIndex: number, 
+  tableData: TableData,
+  rowIndex: number,
+  colIndex: number,
   newValue: string
 ): TableData {
   const newRows = [...tableData.rows];
   newRows[rowIndex] = [...newRows[rowIndex]];
   newRows[rowIndex][colIndex] = newValue;
-  
+
   return {
     ...tableData,
     rows: newRows,
-  };
-}
-
-/**
- * Updates a header in the table data
- */
-export function updateTableHeader(
-  tableData: TableData, 
-  headerIndex: number, 
-  newHeader: string
-): TableData {
-  const newHeaders = [...tableData.headers];
-  newHeaders[headerIndex] = newHeader;
-  
-  return {
-    ...tableData,
-    headers: newHeaders,
   };
 }
 
@@ -90,16 +82,16 @@ export function updateTableHeader(
 export function getTableStats(tableData: TableData) {
   const totalCells = tableData.headers.length * tableData.rows.length;
   const emptyCells = tableData.rows.reduce(
-    (count, row) => count + row.filter(cell => cell.trim() === '').length,
+    (count, row) => count + row.filter((cell) => cell.trim() === "").length,
     0
   );
-  
+
   return {
     rows: tableData.rows.length,
     columns: tableData.headers.length,
     totalCells,
     emptyCells,
     filledCells: totalCells - emptyCells,
-    isLargeDataset: totalCells > 1000
+    isLargeDataset: totalCells > 1000,
   };
 }

@@ -3,6 +3,7 @@
 import type React from "react";
 
 import { useState, useCallback } from "react";
+import { useLoading } from "@/hooks/use-loading";
 import { AppHeader } from "@/components/tablio/layout/AppHeader";
 import { ExportControls } from "@/components/tablio/layout/ExportControls";
 import { MobileControlsToggle } from "@/components/tablio/layout/MobileControlsToggle";
@@ -11,6 +12,12 @@ import { toast } from "sonner";
 import type { TableData, ExportFormat } from "@/types/tablio";
 import { formatTableData } from "@/utils/export-formatters";
 import { getTableStats } from "@/utils/table-operations";
+import { 
+  handleGoogleSheetsExportFlow, 
+  validateTableDataForExport,
+  generateDefaultSheetTitle,
+  sanitizeSheetTitle
+} from "@/utils/google-sheets-utils";
 import { SkeletonTable } from "@/components/tablio/feedback/SkeletonTable";
 import { ProcessingLoadingOverlay } from "@/components/tablio/feedback/ProcessingLoadingOverlay";
 import { DownloadLoadingOverlay } from "@/components/tablio/feedback/DownloadLoadingOverlay";
@@ -24,34 +31,33 @@ export default function TablioApp() {
   const [tableData, setTableData] = useState<TableData | null>(null);
   const [fileName, setFileName] = useState("");
   const [format, setFormat] = useState<ExportFormat>("xlsx");
-  const [isProcessing, setIsProcessing] = useState(false);
-  const [isDownloading, setIsDownloading] = useState(false);
   const [showMobileControls, setShowMobileControls] = useState(false);
-  const [loadingProgress, setLoadingProgress] = useState(0);
-  const [loadingMessage, setLoadingMessage] = useState("");
+  const { 
+    loadingState, 
+    startLoading, 
+    updateProgress, 
+    stopLoading, 
+    isProcessing, 
+    isDownloading 
+  } = useLoading();
 
   const processData = useCallback(
     async (parsed: TableData, fileName?: string) => {
-      setIsProcessing(true);
-      setLoadingProgress(0);
+      startLoading('processing', "Veri analiz ediliyor...");
+      updateProgress(20);
 
       const stats = getTableStats(parsed);
       const isLargeDataset = stats.isLargeDataset;
 
-      setLoadingMessage("Veri analiz ediliyor...");
-      setLoadingProgress(20);
-
       if (isLargeDataset) {
-        setLoadingMessage("Büyük veri seti işleniyor...");
-        setLoadingProgress(40);
+        updateProgress(40, "Büyük veri seti işleniyor...");
         
         // For large datasets, allow UI updates during processing
         const chunkSize = 1000;
         const totalChunks = Math.ceil(parsed.rows.length / chunkSize);
 
         for (let i = 0; i < totalChunks; i++) {
-          setLoadingMessage(`Veriler işleniyor... (${i + 1}/${totalChunks})`);
-          setLoadingProgress(40 + (i / totalChunks) * 40);
+          updateProgress(40 + (i / totalChunks) * 40, `Veriler işleniyor... (${i + 1}/${totalChunks})`);
 
           // Allow UI to update every few chunks
           if (i % 10 === 0) {
@@ -59,30 +65,26 @@ export default function TablioApp() {
           }
         }
       } else {
-        setLoadingProgress(60);
+        updateProgress(60);
       }
 
-      setLoadingMessage("Tablo hazırlanıyor...");
-      setLoadingProgress(80);
+      updateProgress(80, "Tablo hazırlanıyor...");
 
       setTableData(parsed);
       if (fileName) {
         setFileName(fileName);
       }
 
-      setLoadingMessage("Tamamlanıyor...");
-      setLoadingProgress(95);
+      updateProgress(95, "Tamamlanıyor...");
 
       // Allow final UI update
       await new Promise((resolve) => requestAnimationFrame(resolve));
 
-      setLoadingProgress(100);
+      updateProgress(100);
       
       // Brief completion state
       setTimeout(() => {
-        setIsProcessing(false);
-        setLoadingProgress(0);
-        setLoadingMessage("");
+        stopLoading();
       }, 150);
 
       const finalStats = getTableStats(parsed);
@@ -94,7 +96,7 @@ export default function TablioApp() {
         }tablo yüklendi.`
       );
     },
-    []
+    [startLoading, updateProgress, stopLoading]
   );
 
   // Data input hook
@@ -124,14 +126,11 @@ export default function TablioApp() {
   const handleDownload = useCallback(async () => {
     if (!tableData) return;
 
-    setIsDownloading(true);
-    setLoadingProgress(0);
-
     const stats = getTableStats(tableData);
     const isLargeDataset = stats.isLargeDataset;
 
-    setLoadingMessage(`${format.toUpperCase()} formatına dönüştürülüyor...`);
-    setLoadingProgress(25);
+    startLoading('downloading', `${format.toUpperCase()} formatına dönüştürülüyor...`);
+    updateProgress(25);
 
     const { content, mimeType, fileExtension } = await formatTableData(
       tableData,
@@ -139,21 +138,18 @@ export default function TablioApp() {
     );
 
     if (isLargeDataset) {
-      setLoadingMessage("Büyük dosya oluşturuluyor...");
-      setLoadingProgress(60);
+      updateProgress(60, "Büyük dosya oluşturuluyor...");
       // Allow UI update for large files
       await new Promise((resolve) => requestAnimationFrame(resolve));
     }
 
-    setLoadingMessage("Dosya hazırlanıyor...");
-    setLoadingProgress(80);
+    updateProgress(80, "Dosya hazırlanıyor...");
 
     const blob = new Blob([content as BlobPart], { type: mimeType });
     const link = document.createElement("a");
     const url = URL.createObjectURL(blob);
 
-    setLoadingMessage("İndirme başlatılıyor...");
-    setLoadingProgress(95);
+    updateProgress(95, "İndirme başlatılıyor...");
 
     link.setAttribute("href", url);
     link.setAttribute("download", `${fileName}.${fileExtension}`);
@@ -163,26 +159,95 @@ export default function TablioApp() {
     link.click();
     document.body.removeChild(link);
 
-    setLoadingProgress(100);
+    updateProgress(100);
     
     // Brief completion state
     setTimeout(() => {
-      setIsDownloading(false);
-      setLoadingProgress(0);
-      setLoadingMessage("");
+      stopLoading();
     }, 150);
 
     const fileSizeKB = Math.round(blob.size / 1024);
     toast.success(
       `Dosya indirildi: ${fileName}.${fileExtension} dosyası başarıyla indirildi. (${fileSizeKB} KB)`
     );
-  }, [tableData, fileName, format]);
+  }, [tableData, fileName, format, startLoading, updateProgress, stopLoading]);
 
-  const handleGoogleSheetsExport = useCallback(() => {
-    toast(
-      "Yakında gelecek: Google Sheets entegrasyonu üzerinde çalışıyoruz. Çok yakında kullanıma sunulacak."
-    );
-  }, []);
+  const handleGoogleSheetsExport = useCallback(async () => {
+    if (!tableData) {
+      toast.error("Export edilecek tablo verisi bulunamadı.");
+      return;
+    }
+
+    if (!validateTableDataForExport(tableData)) {
+      toast.error("Tablo verisi Google Sheets'e aktarım için uygun değil.");
+      return;
+    }
+
+    startLoading('downloading', "Google Sheets'e bağlanılıyor...");
+
+    try {
+      updateProgress(25, "Google hesabınız doğrulanıyor...");
+
+      // Use user's filename or generate default title
+      const userFileName = fileName.trim();
+      const sheetTitle = userFileName 
+        ? sanitizeSheetTitle(userFileName) 
+        : generateDefaultSheetTitle();
+      const sheetTabName = userFileName 
+        ? sanitizeSheetTitle(userFileName) 
+        : "Tablio Verisi";
+        
+      const result = await handleGoogleSheetsExportFlow(tableData, {
+        title: sheetTitle,
+        sheetName: sheetTabName,
+        makePublic: false,
+      });
+
+      updateProgress(75, "Google Sheet oluşturuluyor...");
+
+      if (result.success) {
+        updateProgress(100, "Başarıyla tamamlandı!");
+
+        setTimeout(() => {
+          stopLoading();
+        }, 1000);
+
+        toast.success(
+          `Google Sheets'e aktarıldı! Tablonuz "${sheetTitle}" adıyla oluşturuldu.`,
+          {
+            action: {
+              label: "Google Sheets'te Aç",
+              onClick: () => window.open(result.spreadsheetUrl, '_blank')
+            },
+            duration: 8000,
+          }
+        );
+      } else {
+        throw new Error(result.message || "Google Sheets export başarısız");
+      }
+    } catch (error) {
+      console.error("Google Sheets export error:", error);
+      
+      stopLoading();
+
+      let errorMessage = "Google Sheets'e aktarım sırasında bir hata oluştu.";
+      
+      if (error instanceof Error) {
+        if (error.message.includes("OAuth") || error.message.includes("yetkilendirme")) {
+          errorMessage = "Google hesabı yetkilendirmesi başarısız. Lütfen tekrar deneyin.";
+        } else if (error.message.includes("token")) {
+          errorMessage = "Google hesabınıza erişim süresi doldu. Lütfen tekrar giriş yapın.";
+        } else if (error.message.includes("network") || error.message.includes("fetch")) {
+          errorMessage = "İnternet bağlantınızı kontrol edin ve tekrar deneyin.";
+        }
+      }
+
+      toast.error(errorMessage, {
+        description: "Sorun devam ederse, sayfayı yenileyip tekrar deneyin.",
+        duration: 6000,
+      });
+    }
+  }, [tableData, fileName, startLoading, updateProgress, stopLoading]);
 
 
   return (
@@ -199,8 +264,8 @@ export default function TablioApp() {
             {isProcessing ? (
               <div className="w-full max-w-4xl space-y-6 animate-in fade-in duration-500">
                 <ProcessingLoadingOverlay
-                  message={loadingMessage}
-                  progress={loadingProgress}
+                  message={loadingState.message}
+                  progress={loadingState.progress}
                 />
                 <SkeletonTable />
               </div>
@@ -232,8 +297,8 @@ export default function TablioApp() {
 
             {isDownloading && (
               <DownloadLoadingOverlay
-                message={loadingMessage}
-                progress={loadingProgress}
+                message={loadingState.message}
+                progress={loadingState.progress}
               />
             )}
 
