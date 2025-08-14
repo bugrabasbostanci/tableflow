@@ -1,11 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { OAuth2Client } from 'google-auth-library';
 
-const oauth2Client = new OAuth2Client({
-  clientId: process.env.GOOGLE_OAUTH_CLIENT_ID,
-  clientSecret: process.env.GOOGLE_OAUTH_CLIENT_SECRET,
-  redirectUri: `${process.env.NEXTAUTH_URL}/api/auth/google/callback`,
-});
+export const runtime = 'edge';
+
+interface TokenResponse {
+  access_token: string;
+  refresh_token?: string;
+  expires_in: number;
+  token_type: string;
+}
 
 export async function GET(request: NextRequest) {
   try {
@@ -31,8 +33,27 @@ export async function GET(request: NextRequest) {
       return NextResponse.redirect(new URL('/api/auth/google/error', request.url));
     }
 
-    // Exchange code for tokens
-    const { tokens } = await oauth2Client.getToken(code);
+    // Exchange code for tokens using fetch API
+    const tokenResponse = await fetch('https://oauth2.googleapis.com/token', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: new URLSearchParams({
+        client_id: process.env.GOOGLE_OAUTH_CLIENT_ID!,
+        client_secret: process.env.GOOGLE_OAUTH_CLIENT_SECRET!,
+        code: code,
+        grant_type: 'authorization_code',
+        redirect_uri: `${process.env.NEXTAUTH_URL}/api/auth/google/callback`,
+      }).toString(),
+    });
+
+    if (!tokenResponse.ok) {
+      console.error('Token exchange failed:', await tokenResponse.text());
+      return NextResponse.redirect(new URL('/api/auth/google/error', request.url));
+    }
+
+    const tokens: TokenResponse = await tokenResponse.json();
     
     if (!tokens.access_token) {
       return NextResponse.redirect(new URL('/api/auth/google/error', request.url));
@@ -42,12 +63,15 @@ export async function GET(request: NextRequest) {
     const redirectUrl = new URL('/api/auth/google/success', request.url);
     const response = NextResponse.redirect(redirectUrl);
 
+    // Calculate expiry date from expires_in seconds
+    const expiryDate = Date.now() + (tokens.expires_in * 1000);
+
     // Set tokens in cookies
     response.cookies.set('google_access_token', tokens.access_token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
-      maxAge: tokens.expiry_date ? Math.floor((tokens.expiry_date - Date.now()) / 1000) : 3600, // 1 hour default
+      maxAge: tokens.expires_in || 3600, // Use expires_in or 1 hour default
     });
 
     if (tokens.refresh_token) {
@@ -59,14 +83,12 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    if (tokens.expiry_date) {
-      response.cookies.set('google_expiry_date', tokens.expiry_date.toString(), {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'lax',
-        maxAge: 60 * 60 * 24 * 30, // 30 days
-      });
-    }
+    response.cookies.set('google_expiry_date', expiryDate.toString(), {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 60 * 60 * 24 * 30, // 30 days
+    });
 
     // Clear the state cookie
     response.cookies.delete('oauth_state');

@@ -151,8 +151,11 @@ export default function TablioApp() {
 
     updateProgress(95, "İndirme başlatılıyor...");
 
+    // Use default name if fileName is empty
+    const finalFileName = fileName.trim() || "tablio-export";
+
     link.setAttribute("href", url);
-    link.setAttribute("download", `${fileName}.${fileExtension}`);
+    link.setAttribute("download", `${finalFileName}.${fileExtension}`);
     link.style.visibility = "hidden";
 
     document.body.appendChild(link);
@@ -168,7 +171,7 @@ export default function TablioApp() {
 
     const fileSizeKB = Math.round(blob.size / 1024);
     toast.success(
-      `Dosya indirildi: ${fileName}.${fileExtension} dosyası başarıyla indirildi. (${fileSizeKB} KB)`
+      `Dosya indirildi: ${finalFileName}.${fileExtension} dosyası başarıyla indirildi. (${fileSizeKB} KB)`
     );
   }, [tableData, fileName, format, startLoading, updateProgress, stopLoading]);
 

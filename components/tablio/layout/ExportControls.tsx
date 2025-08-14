@@ -48,7 +48,7 @@ export function ExportControls({
           <Input
             value={fileName}
             onChange={(e) => setFileName(e.target.value)}
-            placeholder="tablio-file"
+            placeholder="Boş bırakılabilir (otomatik: tablio-export)"
             className="bg-input transition-all duration-200 focus:scale-[1.02] w-full"
           />
         </div>

@@ -1,12 +1,114 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { OAuth2Client } from 'google-auth-library';
-import { GoogleSpreadsheet } from 'google-spreadsheet';
 import type { TableData, GoogleSheetsExportOptions, GoogleSheetsExportResult } from '@/types/tablio';
 
-const oauth2Client = new OAuth2Client({
-  clientId: process.env.GOOGLE_OAUTH_CLIENT_ID,
-  clientSecret: process.env.GOOGLE_OAUTH_CLIENT_SECRET,
-});
+export const runtime = 'edge';
+
+interface SpreadsheetCreateResponse {
+  spreadsheetId: string;
+  sheets: Array<{
+    properties: {
+      sheetId: number;
+      title: string;
+    };
+  }>;
+}
+
+async function createSpreadsheet(accessToken: string, title: string, sheetName: string = 'Tablio Verisi'): Promise<SpreadsheetCreateResponse> {
+  const response = await fetch('https://sheets.googleapis.com/v4/spreadsheets', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${accessToken}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      properties: {
+        title: title,
+      },
+      sheets: [{
+        properties: {
+          title: sheetName,
+        },
+      }],
+    }),
+  });
+
+  if (!response.ok) {
+    const error = await response.text();
+    throw new Error(`Failed to create spreadsheet: ${error}`);
+  }
+
+  return response.json();
+}
+
+async function updateSheetData(
+  accessToken: string,
+  spreadsheetId: string,
+  headers: string[],
+  rows: string[][],
+  sheetName: string = 'Tablio Verisi'
+) {
+  // Prepare all data including headers
+  const allData = [headers, ...rows];
+  
+  // Convert to the format expected by the API
+  const values = allData.map(row => 
+    row.map(cell => cell || '') // Ensure no null values
+  );
+
+  // Calculate the actual range based on data dimensions
+  const maxCol = Math.max(headers.length, ...rows.map(row => row.length));
+  const endColumn = String.fromCharCode(65 + Math.min(maxCol - 1, 25)); // A-Z
+  const range = `A1:${endColumn}${allData.length}`;
+
+  // Format the range with proper sheet name quoting and encoding
+  const fullRange = `'${sheetName}'!${range}`;
+
+  // Use the simpler values API with proper range encoding
+  const response = await fetch(
+    `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${encodeURIComponent(fullRange)}?valueInputOption=RAW`,
+    {
+      method: 'PUT',
+      headers: {
+        'Authorization': `Bearer ${accessToken}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        values: values,
+      }),
+    }
+  );
+
+  if (!response.ok) {
+    const error = await response.text();
+    throw new Error(`Failed to update sheet data: ${error}`);
+  }
+
+  return response.json();
+}
+
+async function makeSpreadsheetPublic(accessToken: string, spreadsheetId: string) {
+  const response = await fetch(
+    `https://www.googleapis.com/drive/v3/files/${spreadsheetId}/permissions`,
+    {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${accessToken}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        role: 'reader',
+        type: 'anyone',
+      }),
+    }
+  );
+
+  if (!response.ok) {
+    const error = await response.text();
+    throw new Error(`Failed to make spreadsheet public: ${error}`);
+  }
+
+  return response.json();
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -20,10 +122,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Get tokens from cookies
+    // Get access token from cookies
     const accessToken = request.cookies.get('google_access_token')?.value;
-    const refreshToken = request.cookies.get('google_refresh_token')?.value;
-    const expiryDate = request.cookies.get('google_expiry_date')?.value;
 
     if (!accessToken) {
       return NextResponse.json(
@@ -32,63 +132,32 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Setup OAuth2 client with tokens
-    oauth2Client.setCredentials({
-      access_token: accessToken,
-      refresh_token: refreshToken,
-      expiry_date: expiryDate ? parseInt(expiryDate) : undefined,
-    });
-
-    // Listen for token refresh
-    oauth2Client.on('tokens', (tokens) => {
-      // In a real app, you might want to update cookies here
-      console.log('Tokens refreshed:', tokens);
-    });
-
     // Create new Google Spreadsheet
     const title = options?.title || `Tablio Export ${new Date().toLocaleDateString('tr-TR')}`;
-    const doc = await GoogleSpreadsheet.createNewSpreadsheetDocument(oauth2Client, { title });
-    
-    // Get the first sheet
-    const sheet = doc.sheetsByIndex[0];
-    
-    // Set sheet title
     const sheetName = options?.sheetName || 'Tablio Verisi';
-    await sheet.updateProperties({ title: sheetName });
-
-    // Set header row
-    await sheet.setHeaderRow(tableData.headers);
-
-    // Add data rows
-    if (tableData.rows.length > 0) {
-      const rowData = tableData.rows.map(row => {
-        const rowObject: { [key: string]: string } = {};
-        tableData.headers.forEach((header, index) => {
-          rowObject[header] = row[index] || '';
-        });
-        return rowObject;
-      });
-
-      // Add rows in batches to handle large datasets
-      const batchSize = 100;
-      for (let i = 0; i < rowData.length; i += batchSize) {
-        const batch = rowData.slice(i, i + batchSize);
-        await sheet.addRows(batch);
-      }
-    }
+    const spreadsheet = await createSpreadsheet(accessToken, title, sheetName);
+    
+    // Update sheet with data
+    await updateSheetData(
+      accessToken,
+      spreadsheet.spreadsheetId,
+      tableData.headers,
+      tableData.rows,
+      sheetName
+    );
 
     // Set public access if requested
     if (options?.makePublic) {
       try {
-        await doc.setPublicAccessLevel('reader');
+        await makeSpreadsheetPublic(accessToken, spreadsheet.spreadsheetId);
       } catch (error) {
         console.warn('Could not set public access:', error);
       }
     }
 
     const result: GoogleSheetsExportResult = {
-      spreadsheetId: doc.spreadsheetId,
-      spreadsheetUrl: `https://docs.google.com/spreadsheets/d/${doc.spreadsheetId}/edit`,
+      spreadsheetId: spreadsheet.spreadsheetId,
+      spreadsheetUrl: `https://docs.google.com/spreadsheets/d/${spreadsheet.spreadsheetId}/edit`,
       success: true,
       message: 'Google Sheets\'e başarıyla aktarıldı',
     };
@@ -99,9 +168,11 @@ export async function POST(request: NextRequest) {
     
     let errorMessage = 'Google Sheets\'e aktarım sırasında hata oluştu';
     if (error instanceof Error) {
-      if (error.message.includes('insufficient authentication scopes')) {
+      if (error.message.includes('insufficient authentication scopes') || 
+          error.message.includes('Invalid Credentials')) {
         errorMessage = 'Yetki eksikliği. Lütfen tekrar giriş yapın.';
-      } else if (error.message.includes('invalid_grant')) {
+      } else if (error.message.includes('invalid_grant') ||
+                 error.message.includes('Token has been expired or revoked')) {
         errorMessage = 'Oturum süresi doldu. Lütfen tekrar giriş yapın.';
       }
     }
