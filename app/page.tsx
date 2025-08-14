@@ -248,6 +248,7 @@ export default function TablioApp() {
               editValue={tableEditorProps.editValue}
               onEditValueChange={tableEditorProps.setEditValue}
               onCellClick={tableEditorProps.handleCellClick}
+              onHeaderClick={tableEditorProps.handleHeaderClick}
               onCellSave={tableEditorProps.handleCellSave}
               onCellCancel={tableEditorProps.handleCellCancel}
               onRemoveRow={tableEditorProps.removeRow}

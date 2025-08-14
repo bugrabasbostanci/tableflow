@@ -26,16 +26,36 @@ export function useTableEditor({ tableData, onTableChange }: UseTableEditorProps
     []
   );
 
+  const handleHeaderClick = useCallback(
+    (colIndex: number, currentValue: string) => {
+      setEditingCell({ row: -1, col: colIndex });
+      setEditValue(currentValue);
+    },
+    []
+  );
+
   const handleCellSave = useCallback(() => {
     if (!editingCell || !tableData) return;
 
-    const updatedTableData = updateTableCell(
-      tableData,
-      editingCell.row,
-      editingCell.col,
-      editValue
-    );
-    onTableChange(updatedTableData);
+    if (editingCell.row === -1) {
+      // Editing a header
+      const updatedTableData = {
+        ...tableData,
+        headers: tableData.headers.map((header, index) =>
+          index === editingCell.col ? editValue : header
+        ),
+      };
+      onTableChange(updatedTableData);
+    } else {
+      // Editing a regular cell
+      const updatedTableData = updateTableCell(
+        tableData,
+        editingCell.row,
+        editingCell.col,
+        editValue
+      );
+      onTableChange(updatedTableData);
+    }
     setEditingCell(null);
     setEditValue("");
   }, [editingCell, editValue, tableData, onTableChange]);
@@ -92,6 +112,7 @@ export function useTableEditor({ tableData, onTableChange }: UseTableEditorProps
     editValue,
     setEditValue,
     handleCellClick,
+    handleHeaderClick,
     handleCellSave,
     handleCellCancel,
     addRow,

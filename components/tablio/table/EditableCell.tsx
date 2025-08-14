@@ -32,7 +32,7 @@ export function EditableCell({
           value={editValue}
           onChange={(e) => onEditValueChange(e.target.value)}
           onKeyDown={handleKeyDown}
-          className="h-7 sm:h-8 text-xs sm:text-sm min-w-0"
+          className="h-7 sm:h-8 text-xs sm:text-sm min-w-[120px] flex-1"
           autoFocus
         />
         <Button

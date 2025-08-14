@@ -10,6 +10,7 @@ interface EditableTableProps {
   editValue: string;
   onEditValueChange: (value: string) => void;
   onCellClick: (rowIndex: number, colIndex: number, currentValue: string) => void;
+  onHeaderClick: (colIndex: number, currentValue: string) => void;
   onCellSave: () => void;
   onCellCancel: () => void;
   onRemoveRow: (rowIndex: number) => void;
@@ -22,6 +23,7 @@ export function EditableTable({
   editValue,
   onEditValueChange,
   onCellClick,
+  onHeaderClick,
   onCellSave,
   onCellCancel,
   onRemoveRow,
@@ -44,12 +46,18 @@ export function EditableTable({
                     key={index}
                     className="text-left p-2 sm:p-3 font-medium text-foreground relative group min-w-[120px] sm:min-w-0"
                   >
-                    <div
-                      className="truncate pr-6 sm:pr-8"
-                      title={header}
-                    >
-                      {header}
-                    </div>
+                    <EditableCell
+                      value={header}
+                      isEditing={
+                        editingCell?.row === -1 &&
+                        editingCell?.col === index
+                      }
+                      editValue={editValue}
+                      onEditValueChange={onEditValueChange}
+                      onSave={onCellSave}
+                      onCancel={onCellCancel}
+                      onClick={() => onHeaderClick(index, header)}
+                    />
                     <Button
                       variant="ghost"
                       size="sm"
