@@ -12,13 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Download,
-  Trash2,
-  FileSpreadsheet,
-  Loader2,
-  Menu,
-} from "lucide-react";
+import { Download, Trash2, FileSpreadsheet, Loader2, Menu } from "lucide-react";
 import { toast } from "sonner";
 import { useIsMobile } from "@/hooks/use-mobile";
 import type { TableData, ExportFormat } from "@/types/tablio";
@@ -35,7 +29,7 @@ import { useTableEditor } from "@/hooks/use-table-editor";
 
 export default function TablioApp() {
   const [tableData, setTableData] = useState<TableData | null>(null);
-  const [fileName, setFileName] = useState("tablio-export");
+  const [fileName, setFileName] = useState("");
   const [format, setFormat] = useState<ExportFormat>("xlsx");
   const [isProcessing, setIsProcessing] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
@@ -128,7 +122,9 @@ export default function TablioApp() {
       toast.success(
         `Tablo başarıyla yüklendi! ${finalStats.rows} satır ve ${
           finalStats.columns
-        } sütun içeren ${finalStats.isLargeDataset ? "büyük " : ""}tablo yüklendi.`
+        } sütun içeren ${
+          finalStats.isLargeDataset ? "büyük " : ""
+        }tablo yüklendi.`
       );
     },
     []
@@ -138,9 +134,9 @@ export default function TablioApp() {
   const dataInputProps = useDataInput({ onDataLoaded: processData });
 
   // Table editor hook
-  const tableEditorProps = useTableEditor({ 
-    tableData, 
-    onTableChange: setTableData 
+  const tableEditorProps = useTableEditor({
+    tableData,
+    onTableChange: setTableData,
   });
 
   const handleKeyDown = useCallback(
@@ -152,12 +148,11 @@ export default function TablioApp() {
 
   const handleClear = useCallback(() => {
     setTableData(null);
-    setFileName("tablio-export");
+    setFileName("tablio-file");
     setFormat("xlsx");
     setShowMobileControls(false);
     toast.success("Veriler temizlendi: Yeni bir tablo yapıştırabilirsiniz.");
   }, []);
-
 
   const handleDownload = useCallback(async () => {
     if (!tableData) return;
@@ -167,7 +162,8 @@ export default function TablioApp() {
 
     const stats = getTableStats(tableData);
     const isLargeDataset = stats.isLargeDataset;
-    const isComplexFormat = format === "json" || format === "xml";
+    const isComplexFormat =
+      format === "json" || format === "pdf" || format === "html";
     const baseDelay = isLargeDataset
       ? isComplexFormat
         ? 200
@@ -192,11 +188,11 @@ export default function TablioApp() {
 
     // Format-specific loading messages
     const formatMessages: Record<ExportFormat, string> = {
-      csv: "CSV satırları oluşturuluyor...",
-      tsv: "TSV satırları oluşturuluyor...",
-      json: "JSON objeleri oluşturuluyor...",
-      xml: "XML yapısı oluşturuluyor...",
-      xlsx: "Excel formatı hazırlanıyor..."
+      csv: "CSV dosyası oluşturuluyor...",
+      xlsx: "Excel dosyası oluşturuluyor...",
+      pdf: "PDF raporu hazırlanıyor...",
+      html: "HTML tablosu oluşturuluyor...",
+      json: "JSON verisi hazırlanıyor...",
     };
 
     if (isLargeDataset) {
@@ -205,13 +201,16 @@ export default function TablioApp() {
       await new Promise((resolve) => setTimeout(resolve, baseDelay / 2));
     }
 
-    const { content, mimeType, fileExtension } = formatTableData(tableData, format);
+    const { content, mimeType, fileExtension } = await formatTableData(
+      tableData,
+      format
+    );
 
     setLoadingMessage("Dosya oluşturuluyor...");
     setLoadingProgress(85);
     await new Promise((resolve) => setTimeout(resolve, baseDelay / 2));
 
-    const blob = new Blob([content], { type: mimeType });
+    const blob = new Blob([content as BlobPart], { type: mimeType });
     const link = document.createElement("a");
     const url = URL.createObjectURL(blob);
 
@@ -246,7 +245,6 @@ export default function TablioApp() {
     );
   }, []);
 
-
   useEffect(() => {
     const preventDefaults = (e: DragEvent) => {
       e.preventDefault();
@@ -279,7 +277,6 @@ export default function TablioApp() {
       onKeyDown={handleKeyDown}
       tabIndex={0}
     >
-
       {/* Header */}
       <header className="py-6 sm:py-8 text-center px-4">
         <div className="flex items-center justify-center gap-2 sm:gap-3 mb-2">
@@ -298,7 +295,7 @@ export default function TablioApp() {
           <div className="flex flex-col items-center justify-center min-h-[300px] sm:min-h-[400px]">
             {isProcessing ? (
               <div className="w-full max-w-4xl space-y-6 animate-in fade-in duration-500">
-                <ProcessingLoadingOverlay 
+                <ProcessingLoadingOverlay
                   message={loadingMessage}
                   progress={loadingProgress}
                 />
@@ -345,7 +342,7 @@ export default function TablioApp() {
                   <Input
                     value={fileName}
                     onChange={(e) => setFileName(e.target.value)}
-                    placeholder="tablio-export"
+                    placeholder="tablio-file"
                     className="bg-input transition-all duration-200 focus:scale-[1.02] w-full"
                   />
                 </div>
@@ -353,16 +350,19 @@ export default function TablioApp() {
                   <label className="text-sm font-medium text-foreground">
                     Format
                   </label>
-                  <Select value={format} onValueChange={(value: ExportFormat) => setFormat(value)}>
+                  <Select
+                    value={format}
+                    onValueChange={(value: ExportFormat) => setFormat(value)}
+                  >
                     <SelectTrigger className="w-full sm:w-40 bg-input transition-all duration-200 hover:bg-input/80">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="xlsx">Excel (XLSX)</SelectItem>
                       <SelectItem value="csv">CSV</SelectItem>
-                      <SelectItem value="tsv">TSV</SelectItem>
+                      <SelectItem value="pdf">PDF </SelectItem>
+                      <SelectItem value="html">HTML Tablo</SelectItem>
                       <SelectItem value="json">JSON</SelectItem>
-                      <SelectItem value="xml">XML</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -404,7 +404,7 @@ export default function TablioApp() {
             </div>
 
             {isDownloading && (
-              <DownloadLoadingOverlay 
+              <DownloadLoadingOverlay
                 message={loadingMessage}
                 progress={loadingProgress}
               />

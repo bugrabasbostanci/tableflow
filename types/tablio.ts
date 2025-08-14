@@ -20,13 +20,13 @@ export interface LoadingState {
 
 export interface ExportOptions {
   fileName: string;
-  format: 'xlsx' | 'csv' | 'tsv' | 'json' | 'xml';
+  format: 'xlsx' | 'csv' | 'pdf' | 'html' | 'json';
 }
 
 export type ExportFormat = ExportOptions['format'];
 
 export interface ExportResult {
-  content: string;
+  content: string | Uint8Array;
   mimeType: string;
   fileExtension: string;
 }
