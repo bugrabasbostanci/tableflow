@@ -4,17 +4,17 @@ export function AppFooter() {
       <div className="container mx-auto px-4">
         <div className="flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-4 text-xs sm:text-sm text-muted-foreground">
           <a
-            href="#"
+            href="/privacy-policy"
             className="hover:text-primary transition-colors duration-200 touch-manipulation"
           >
-            How to Use?
+            Privacy Policy
           </a>
           <span className="hidden sm:inline">•</span>
           <a
-            href="#"
+            href="/terms-of-service"
             className="hover:text-primary transition-colors duration-200 touch-manipulation"
           >
-            About
+            Terms of Service
           </a>
           <span className="hidden sm:inline">•</span>
           <a

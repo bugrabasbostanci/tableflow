@@ -65,7 +65,7 @@ export function EditableCell({
       >
         {value || (
           <span className="text-muted-foreground italic">
-            Boş
+            Empty
           </span>
         )}
       </span>

@@ -33,7 +33,7 @@ export function addColumnToTable(
   tableData: TableData,
   headerName?: string
 ): TableData {
-  const newHeader = headerName || `Sütun ${tableData.headers.length + 1}`;
+  const newHeader = headerName || `Column ${tableData.headers.length + 1}`;
   return {
     headers: [...tableData.headers, newHeader],
     rows: tableData.rows.map((row) => [...row, ""]),
