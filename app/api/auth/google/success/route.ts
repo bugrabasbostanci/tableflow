@@ -7,7 +7,7 @@ export async function GET() {
     <!DOCTYPE html>
     <html>
       <head>
-        <title>Google Sheets - Yetkilendirme Başarılı</title>
+        <title>Google Sheets - Authorization Successful</title>
         <meta charset="utf-8">
         <style>
           body {

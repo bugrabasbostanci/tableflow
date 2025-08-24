@@ -257,16 +257,16 @@ export function formatAsHTML(tableData: TableData): ExportResult {
 
   const tableHTML = `
     <!DOCTYPE html>
-    <html lang="tr">
+    <html lang="en">
     <head>
       <meta charset="UTF-8">
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
-      <title>Tablio Veri Tablosu</title>
+      <title>Tablio Data Table</title>
       ${styles}
     </head>
     <body>
       <div class="container">
-        <h2>Tablio Veri Tablosu</h2>
+        <h2>Tablio Data Table</h2>
         <table>
           <thead>
             <tr>${tableData.headers.map((h) => `<th>${h}</th>`).join("")}</tr>

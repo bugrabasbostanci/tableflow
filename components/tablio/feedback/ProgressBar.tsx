@@ -5,13 +5,13 @@ interface ProgressBarProps {
 }
 
 const PROGRESS_STEPS = [
-  { threshold: 10, label: "Boyut Analizi" },
-  { threshold: 20, label: "Tespit" },
-  { threshold: 30, label: "Kontrol" },
-  { threshold: 50, label: "Hazırlık" },
-  { threshold: 75, label: "Tip Belirleme" },
-  { threshold: 95, label: "Hazırlanıyor" },
-  { threshold: 100, label: "Tamamlandı" },
+  { threshold: 10, label: "Size Analysis" },
+  { threshold: 20, label: "Detection" },
+  { threshold: 30, label: "Validation" },
+  { threshold: 50, label: "Preparation" },
+  { threshold: 75, label: "Type Detection" },
+  { threshold: 95, label: "Preparing" },
+  { threshold: 100, label: "Completed" },
 ];
 
 export function ProgressBar({ 
@@ -45,7 +45,7 @@ export function ProgressBar({
       
       {!showSteps && (
         <div className="flex justify-between text-xs text-muted-foreground">
-          <span>İndiriliyor...</span>
+          <span>Processing...</span>
           <span>{progress}%</span>
         </div>
       )}

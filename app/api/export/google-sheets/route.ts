@@ -13,7 +13,7 @@ interface SpreadsheetCreateResponse {
   }>;
 }
 
-async function createSpreadsheet(accessToken: string, title: string, sheetName: string = 'Tablio Verisi'): Promise<SpreadsheetCreateResponse> {
+async function createSpreadsheet(accessToken: string, title: string, sheetName: string = 'Tablio Data'): Promise<SpreadsheetCreateResponse> {
   const response = await fetch('https://sheets.googleapis.com/v4/spreadsheets', {
     method: 'POST',
     headers: {
@@ -45,7 +45,7 @@ async function updateSheetData(
   spreadsheetId: string,
   headers: string[],
   rows: string[][],
-  sheetName: string = 'Tablio Verisi'
+  sheetName: string = 'Tablio Data'
 ) {
   // Prepare all data including headers
   const allData = [headers, ...rows];
@@ -127,14 +127,14 @@ export async function POST(request: NextRequest) {
 
     if (!accessToken) {
       return NextResponse.json(
-        { error: 'Google OAuth token bulunamadı. Lütfen tekrar giriş yapın.' },
+        { error: 'Google OAuth token not found. Please sign in again.' },
         { status: 401 }
       );
     }
 
     // Create new Google Spreadsheet
-    const title = options?.title || `Tablio Export ${new Date().toLocaleDateString('tr-TR')}`;
-    const sheetName = options?.sheetName || 'Tablio Verisi';
+    const title = options?.title || `Tablio Export ${new Date().toLocaleDateString('en-US')}`;
+    const sheetName = options?.sheetName || 'Tablio Data';
     const spreadsheet = await createSpreadsheet(accessToken, title, sheetName);
     
     // Update sheet with data
@@ -170,10 +170,10 @@ export async function POST(request: NextRequest) {
     if (error instanceof Error) {
       if (error.message.includes('insufficient authentication scopes') || 
           error.message.includes('Invalid Credentials')) {
-        errorMessage = 'Yetki eksikliği. Lütfen tekrar giriş yapın.';
+        errorMessage = 'Insufficient permissions. Please sign in again.';
       } else if (error.message.includes('invalid_grant') ||
                  error.message.includes('Token has been expired or revoked')) {
-        errorMessage = 'Oturum süresi doldu. Lütfen tekrar giriş yapın.';
+        errorMessage = 'Session expired. Please sign in again.';
       }
     }
 

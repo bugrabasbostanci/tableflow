@@ -50,8 +50,8 @@ export async function exportToGoogleSheets(
     body: JSON.stringify({
       tableData,
       options: {
-        title: options?.title || `Tablio Export ${new Date().toLocaleDateString('tr-TR')}`,
-        sheetName: options?.sheetName || 'Tablio Verisi',
+        title: options?.title || `Tablio Export ${new Date().toLocaleDateString('en-US')}`,
+        sheetName: options?.sheetName || 'Tablio Data',
         makePublic: options?.makePublic || false,
         ...options,
       },

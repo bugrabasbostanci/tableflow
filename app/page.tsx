@@ -26,6 +26,7 @@ import { useDataInput } from "@/hooks/use-data-input";
 import { EditableTable } from "@/components/tablio/table/EditableTable";
 import { TableControls } from "@/components/tablio/table/TableControls";
 import { useTableEditor } from "@/hooks/use-table-editor";
+import { ContentSections } from "@/components/seo/ContentSections";
 
 export default function TablioApp() {
   const [tableData, setTableData] = useState<TableData | null>(null);
@@ -323,6 +324,10 @@ export default function TablioApp() {
               onRemoveColumn={tableEditorProps.removeColumn}
             />
           </div>
+        )}
+        {/* SEO Content - Only show when no table data */}
+        {!tableData && !isProcessing && (
+          <ContentSections />
         )}
       </main>
 

@@ -21,7 +21,7 @@ export function ProcessingLoadingOverlay({
 
         <div className="space-y-2">
           <h2 className="text-xl sm:text-2xl font-semibold text-foreground">
-            Tablo işleniyor...
+            Processing table...
           </h2>
           <p className="text-sm sm:text-base text-muted-foreground animate-pulse">
             {message}

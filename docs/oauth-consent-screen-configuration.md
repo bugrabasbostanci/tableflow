@@ -34,7 +34,7 @@ Fill in the following mandatory fields:
 
 #### Basic Information
 - **App name**: `Tablio`
-- **User support email**: `support@tablio.app` (or your chosen support email)
+- **User support email**: `bb0143sbw@gmail.com`
 - **App logo**: Upload Tablio logo (optional but recommended)
 
 #### App Domain Information
@@ -43,7 +43,7 @@ Fill in the following mandatory fields:
 - **Terms of Service link**: `https://tablio-deu.pages.dev/terms-of-service`
 
 #### Developer Contact Information
-- **Developer contact information**: `support@tablio.app`
+- **Developer contact information**: `bb0143sbw@gmail.com`
 
 #### App Description
 ```

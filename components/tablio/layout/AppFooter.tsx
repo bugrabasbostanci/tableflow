@@ -4,6 +4,13 @@ export function AppFooter() {
       <div className="container mx-auto px-4">
         <div className="flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-4 text-xs sm:text-sm text-muted-foreground">
           <a
+            href="/faq"
+            className="hover:text-primary transition-colors duration-200 touch-manipulation"
+          >
+            FAQ
+          </a>
+          <span className="hidden sm:inline">•</span>
+          <a
             href="/privacy-policy"
             className="hover:text-primary transition-colors duration-200 touch-manipulation"
           >

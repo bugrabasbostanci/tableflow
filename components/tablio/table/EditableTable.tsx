@@ -9,7 +9,11 @@ interface EditableTableProps {
   editingCell: EditingCell | null;
   editValue: string;
   onEditValueChange: (value: string) => void;
-  onCellClick: (rowIndex: number, colIndex: number, currentValue: string) => void;
+  onCellClick: (
+    rowIndex: number,
+    colIndex: number,
+    currentValue: string
+  ) => void;
   onHeaderClick: (colIndex: number, currentValue: string) => void;
   onCellSave: () => void;
   onCellCancel: () => void;
@@ -32,7 +36,7 @@ export function EditableTable({
   return (
     <Card className="p-3 sm:p-6 transition-all duration-200 hover:shadow-md">
       <h3 className="text-base sm:text-lg font-semibold text-foreground mb-3 sm:mb-4">
-        Tablo Önizleme
+        Table Preview
       </h3>
 
       {/* Mobile table wrapper with horizontal scroll */}
@@ -49,8 +53,7 @@ export function EditableTable({
                     <EditableCell
                       value={header}
                       isEditing={
-                        editingCell?.row === -1 &&
-                        editingCell?.col === index
+                        editingCell?.row === -1 && editingCell?.col === index
                       }
                       editValue={editValue}
                       onEditValueChange={onEditValueChange}

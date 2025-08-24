@@ -7,7 +7,7 @@ export async function GET() {
     <!DOCTYPE html>
     <html>
       <head>
-        <title>Google Sheets - Yetkilendirme Hatası</title>
+        <title>Google Sheets - Authorization Error</title>
         <meta charset="utf-8">
         <style>
           body {
@@ -53,8 +53,8 @@ export async function GET() {
       <body>
         <div class="container">
           <div class="error-icon">✗</div>
-          <h1>Yetkilendirme Hatası</h1>
-          <p>Google hesabı bağlantısında bir sorun oluştu. Bu pencere kapanacak...</p>
+          <h1>Authorization Error</h1>
+          <p>There was a problem connecting to your Google account. This window will close...</p>
         </div>
         <script>
           // Signal error to parent window

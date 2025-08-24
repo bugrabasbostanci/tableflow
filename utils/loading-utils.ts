@@ -5,25 +5,25 @@ import type { LoadingState } from "@/types/tablio";
  */
 export const LoadingMessages = {
   // Processing messages
-  ANALYZING_DATA: "Veri analiz ediliyor...",
-  PROCESSING_LARGE_DATASET: "Büyük veri seti işleniyor...",
+  ANALYZING_DATA: "Analyzing data...",
+  PROCESSING_LARGE_DATASET: "Processing large dataset...",
   PROCESSING_CHUNKS: (current: number, total: number) => 
-    `Veriler işleniyor... (${current}/${total})`,
-  PREPARING_TABLE: "Tablo hazırlanıyor...",
-  COMPLETING: "Tamamlanıyor...",
+    `Processing data... (${current}/${total})`,
+  PREPARING_TABLE: "Preparing table...",
+  COMPLETING: "Completing...",
 
   // Download messages
   CONVERTING_FORMAT: (format: string) => 
-    `${format.toUpperCase()} formatına dönüştürülüyor...`,
-  CREATING_LARGE_FILE: "Büyük dosya oluşturuluyor...",
-  PREPARING_FILE: "Dosya hazırlanıyor...",
-  STARTING_DOWNLOAD: "İndirme başlatılıyor...",
+    `Converting to ${format.toUpperCase()} format...`,
+  CREATING_LARGE_FILE: "Creating large file...",
+  PREPARING_FILE: "Preparing file...",
+  STARTING_DOWNLOAD: "Starting download...",
 
   // Google Sheets messages
-  CONNECTING_GOOGLE_SHEETS: "Google Sheets'e bağlanılıyor...",
-  VALIDATING_GOOGLE_ACCOUNT: "Google hesabınız doğrulanıyor...",
-  CREATING_GOOGLE_SHEET: "Google Sheet oluşturuluyor...",
-  SUCCESS_COMPLETED: "Başarıyla tamamlandı!",
+  CONNECTING_GOOGLE_SHEETS: "Connecting to Google Sheets...",
+  VALIDATING_GOOGLE_ACCOUNT: "Verifying your Google account...",
+  CREATING_GOOGLE_SHEET: "Creating Google Sheet...",
+  SUCCESS_COMPLETED: "Successfully completed!",
 } as const;
 
 /**
