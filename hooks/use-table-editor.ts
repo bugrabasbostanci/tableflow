@@ -70,7 +70,7 @@ export function useTableEditor({ tableData, onTableChange }: UseTableEditorProps
 
     const updatedTableData = addRowToTable(tableData);
     onTableChange(updatedTableData);
-    toast.success("Satır eklendi: Tabloya yeni bir satır eklendi.");
+    toast.success("Row added: A new row has been added to the table.");
   }, [tableData, onTableChange]);
 
   const removeRow = useCallback(
@@ -80,7 +80,7 @@ export function useTableEditor({ tableData, onTableChange }: UseTableEditorProps
       const updatedTableData = removeRowFromTable(tableData, rowIndex);
       if (updatedTableData) {
         onTableChange(updatedTableData);
-        toast.success("Satır silindi: Seçilen satır tablodan kaldırıldı.");
+        toast.success("Row deleted: Selected row has been removed from the table.");
       }
     },
     [tableData, onTableChange]
@@ -91,7 +91,7 @@ export function useTableEditor({ tableData, onTableChange }: UseTableEditorProps
 
     const updatedTableData = addColumnToTable(tableData);
     onTableChange(updatedTableData);
-    toast.success("Sütun eklendi: Tabloya yeni bir sütun eklendi.");
+    toast.success("Column added: A new column has been added to the table.");
   }, [tableData, onTableChange]);
 
   const removeColumn = useCallback(
@@ -101,7 +101,7 @@ export function useTableEditor({ tableData, onTableChange }: UseTableEditorProps
       const updatedTableData = removeColumnFromTable(tableData, colIndex);
       if (updatedTableData) {
         onTableChange(updatedTableData);
-        toast.success("Sütun silindi: Seçilen sütun tablodan kaldırıldı.");
+        toast.success("Column deleted: Selected column has been removed from the table.");
       }
     },
     [tableData, onTableChange]

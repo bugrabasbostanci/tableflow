@@ -10,7 +10,7 @@ export function AppHeader() {
         </h1>
       </div>
       <p className="text-sm sm:text-base text-muted-foreground px-4">
-        Kopyaladığınız tabloları istediğiniz formata dönüştürün
+        Convert your copied tables to your desired format
       </p>
     </header>
   );

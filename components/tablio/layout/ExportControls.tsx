@@ -43,12 +43,12 @@ export function ExportControls({
       <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-end">
         <div className="flex-1 w-full space-y-2">
           <label className="text-sm font-medium text-foreground">
-            Dosya Adı
+            File Name
           </label>
           <Input
             value={fileName}
             onChange={(e) => setFileName(e.target.value)}
-            placeholder="Boş bırakılabilir (otomatik: tablio-export)"
+            placeholder="Can be left empty (auto: tablio-export)"
             className="bg-input transition-all duration-200 focus:scale-[1.02] w-full"
           />
         </div>
@@ -64,7 +64,7 @@ export function ExportControls({
               <SelectItem value="xlsx">Excel (XLSX)</SelectItem>
               <SelectItem value="csv">CSV</SelectItem>
               <SelectItem value="pdf">PDF </SelectItem>
-              <SelectItem value="html">HTML Tablo</SelectItem>
+              <SelectItem value="html">HTML Table</SelectItem>
               <SelectItem value="json">JSON</SelectItem>
             </SelectContent>
           </Select>
@@ -77,7 +77,7 @@ export function ExportControls({
             size={isMobile === true ? "sm" : "default"}
           >
             <Trash2 className="w-4 h-4" />
-            <span className="sm:inline">Temizle</span>
+            <span className="sm:inline">Clear</span>
           </Button>
           <Button
             variant="outline"
@@ -92,10 +92,10 @@ export function ExportControls({
               <FileSpreadsheet className="w-4 h-4" />
             )}
             <span className="hidden sm:inline">
-              {isDownloading ? "Aktarılıyor..." : "Google Sheets"}
+              {isDownloading ? "Exporting..." : "Google Sheets"}
             </span>
             <span className="sm:hidden">
-              {isDownloading ? "Aktarılıyor..." : "Sheets"}
+              {isDownloading ? "Exporting..." : "Sheets"}
             </span>
           </Button>
           <Button
@@ -109,7 +109,7 @@ export function ExportControls({
             ) : (
               <Download className="w-4 h-4" />
             )}
-            {isDownloading ? "İndiriliyor..." : "İndir"}
+            {isDownloading ? "Downloading..." : "Download"}
           </Button>
         </div>
       </div>

@@ -19,7 +19,7 @@ export function TableControls({ onAddRow, onAddColumn }: TableControlsProps) {
             className="gap-2 bg-transparent transition-all duration-200 hover:scale-105 flex-1 sm:flex-none touch-manipulation"
           >
             <Plus className="w-4 h-4" />
-            <span className="text-xs sm:text-sm">Satır Ekle</span>
+            <span className="text-xs sm:text-sm">Add Row</span>
           </Button>
           <Button
             variant="outline"
@@ -28,13 +28,13 @@ export function TableControls({ onAddRow, onAddColumn }: TableControlsProps) {
             className="gap-2 bg-transparent transition-all duration-200 hover:scale-105 flex-1 sm:flex-none touch-manipulation"
           >
             <Plus className="w-4 h-4" />
-            <span className="text-xs sm:text-sm">Sütun Ekle</span>
+            <span className="text-xs sm:text-sm">Add Column</span>
           </Button>
         </div>
         <div className="flex items-center gap-2 text-xs sm:text-sm text-muted-foreground justify-center sm:justify-start">
           <Edit3 className="w-4 h-4" />
           <span className="text-center sm:text-left">
-            Hücrelere tıklayarak düzenleyebilirsiniz
+            Click on cells to edit them
           </span>
         </div>
       </div>

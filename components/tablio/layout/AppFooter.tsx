@@ -7,14 +7,14 @@ export function AppFooter() {
             href="#"
             className="hover:text-primary transition-colors duration-200 touch-manipulation"
           >
-            Nasıl Kullanılır?
+            How to Use?
           </a>
           <span className="hidden sm:inline">•</span>
           <a
             href="#"
             className="hover:text-primary transition-colors duration-200 touch-manipulation"
           >
-            Hakkında
+            About
           </a>
           <span className="hidden sm:inline">•</span>
           <a

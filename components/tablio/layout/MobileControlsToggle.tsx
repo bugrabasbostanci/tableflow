@@ -19,8 +19,8 @@ export function MobileControlsToggle({
       >
         <Menu className="w-4 h-4" />
         {showMobileControls
-          ? "Kontrolleri Gizle"
-          : "Kontrolleri Göster"}
+          ? "Hide Controls"
+          : "Show Controls"}
       </Button>
     </div>
   );

@@ -281,7 +281,7 @@ export function formatAsHTML(tableData: TableData): ExportResult {
           </tbody>
         </table>
         <div class="footer">
-          <p>Tablio ile oluşturuldu - ${new Date().toLocaleDateString(
+          <p>Created with Tablio - ${new Date().toLocaleDateString(
             "tr-TR"
           )}</p>
         </div>

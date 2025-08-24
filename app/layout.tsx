@@ -9,9 +9,9 @@ const geistSans = Geist({
 });
 
 export const metadata: Metadata = {
-  title: "Tablio - Tablo Dönüştürücü",
+  title: "Tablio - Table Converter",
   description:
-    "Kopyaladığınız tabloları Excel, CSV ve diğer formatlara dönüştürün",
+    "Convert your copied tables to Excel, CSV and other formats",
 };
 
 export default function RootLayout({
@@ -20,7 +20,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="tr">
+    <html lang="en">
       <body className={`${geistSans.className} antialiased dark`}>
         {children}
         <Toaster />

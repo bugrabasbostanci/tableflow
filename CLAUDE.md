@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Tablio is a web application for converting copied table data into Excel, CSV, and other structured formats. Built for Turkish users, specifically targeting individual stock investors who need to convert financial data tables from websites into formats suitable for analysis.
+Tablio is a web application for converting copied table data into Excel, CSV, and other structured formats. Built for international users who need to convert table data from websites into formats suitable for analysis and processing.
 
 ## Tech Stack
 
@@ -35,7 +35,7 @@ npm run lint
 
 - `app/` - Next.js App Router pages and layouts
   - `page.tsx` - Main application component with table conversion logic
-  - `layout.tsx` - Root layout with Turkish locale and dark theme
+  - `layout.tsx` - Root layout with English locale and dark theme
   - `globals.css` - Tailwind CSS with custom Tablio styles
 - `components/ui/` - shadcn/ui components (Button, Card, Input, Select)
 - `lib/utils.ts` - Utility functions for component variants
@@ -51,7 +51,7 @@ The main application (`app/page.tsx`) implements:
 - **Google Sheets Integration**: Direct export to Google Sheets with OAuth2 authentication
 - **Progress Indicators**: Loading states for processing and downloads
 - **Mobile Responsive**: Touch-friendly interface with mobile controls
-- **Turkish Localization**: All UI text in Turkish
+- **English Interface**: All UI text in English
 
 ## Configuration Files
 
@@ -68,7 +68,7 @@ The application handles:
 - Table validation (consistent column counts)
 - Cell editing with save/cancel functionality
 - Row/column addition and removal
-- Turkish decimal format handling (commas as decimal separators)
+- Decimal format handling for international use
 
 ## Styling Conventions
 
@@ -102,8 +102,8 @@ To enable Google Sheets export functionality:
 
 ## Important Notes
 
-- Application defaults to Turkish language and dark theme
-- Financial data formatting considers Turkish decimal notation (15,77 vs 15.77)
+- Application defaults to English language and dark theme
+- Financial data formatting handles international decimal notation
 - Excel export currently generates CSV format (XLSX library not implemented)
 - Google Sheets integration implemented with OAuth2 authentication
 - Mobile-first responsive design with touch-friendly interactions

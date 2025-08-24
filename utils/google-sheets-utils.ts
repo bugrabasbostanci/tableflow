@@ -29,7 +29,7 @@ export async function initiateGoogleAuth(): Promise<{ authUrl: string }> {
   const response = await fetch('/api/auth/google');
   
   if (!response.ok) {
-    throw new Error('OAuth başlatma hatası');
+    throw new Error('OAuth initialization error');
   }
   
   return response.json();
@@ -61,7 +61,7 @@ export async function exportToGoogleSheets(
   const result = await response.json();
 
   if (!response.ok) {
-    throw new Error(result.error || 'Google Sheets export hatası');
+    throw new Error(result.error || 'Google Sheets export error');
   }
 
   return result;
@@ -149,7 +149,7 @@ export async function handleGoogleSheetsExportFlow(
       const authSuccess = await openGoogleAuthPopup(authUrl);
       
       if (!authSuccess) {
-        throw new Error('Google OAuth yetkilendirmesi başarısız');
+        throw new Error('Google OAuth authorization failed');
       }
 
       // Retry export after authentication

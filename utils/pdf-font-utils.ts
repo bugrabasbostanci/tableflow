@@ -168,7 +168,7 @@ export function createPDFFooter(fontConfig: FontLoadResult, tableData: { headers
 
     // Summary info
     const summaryText = processTextForPDF(
-      `${tableData.rows.length} kayıt • ${tableData.headers.length} sütun`, 
+      `${tableData.rows.length} records • ${tableData.headers.length} columns`, 
       fontConfig
     );
     doc.text(summaryText, pageWidth - 50, pageHeight - 8);

@@ -18,12 +18,12 @@ export function useDataInput({ onDataLoaded }: UseDataInputProps) {
         await onDataLoaded(parsed);
       } else {
         toast.error(
-          "Geçersiz tablo formatı: Lütfen geçerli bir tablo verisi kopyalayıp tekrar deneyin."
+          "Invalid table format: Please copy valid table data and try again."
         );
       }
     } catch {
       toast.error(
-        "Yapıştırma hatası: Panoya erişim sağlanamadı. Lütfen CTRL+V ile manuel olarak yapıştırın."
+        "Paste error: Could not access clipboard. Please paste manually with CTRL+V."
       );
     }
   }, [onDataLoaded]);

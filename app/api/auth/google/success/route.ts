@@ -53,8 +53,8 @@ export async function GET() {
       <body>
         <div class="container">
           <div class="checkmark">✓</div>
-          <h1>Yetkilendirme Başarılı!</h1>
-          <p>Google hesabınız başarıyla bağlandı. Bu pencere kapanacak...</p>
+          <h1>Authorization Successful!</h1>
+          <p>Your Google account has been successfully connected. This window will close...</p>
         </div>
         <script>
           // Signal success to parent window

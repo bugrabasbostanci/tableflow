@@ -114,7 +114,7 @@ export function EditableTable({
       </div>
 
       <p className="text-xs sm:text-sm text-muted-foreground mt-3 animate-in fade-in duration-300 text-center sm:text-left">
-        {tableData.rows.length} satır, {tableData.headers.length} sütun
+        {tableData.rows.length} rows, {tableData.headers.length} columns
       </p>
     </Card>
   );

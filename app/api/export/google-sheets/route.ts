@@ -117,7 +117,7 @@ export async function POST(request: NextRequest) {
 
     if (!tableData || !tableData.headers || !tableData.rows) {
       return NextResponse.json(
-        { error: 'Geçersiz tablo verisi' },
+        { error: 'Invalid table data' },
         { status: 400 }
       );
     }
@@ -159,14 +159,14 @@ export async function POST(request: NextRequest) {
       spreadsheetId: spreadsheet.spreadsheetId,
       spreadsheetUrl: `https://docs.google.com/spreadsheets/d/${spreadsheet.spreadsheetId}/edit`,
       success: true,
-      message: 'Google Sheets\'e başarıyla aktarıldı',
+      message: 'Successfully exported to Google Sheets',
     };
 
     return NextResponse.json(result);
   } catch (error) {
     console.error('Google Sheets export error:', error);
     
-    let errorMessage = 'Google Sheets\'e aktarım sırasında hata oluştu';
+    let errorMessage = 'An error occurred during Google Sheets export';
     if (error instanceof Error) {
       if (error.message.includes('insufficient authentication scopes') || 
           error.message.includes('Invalid Credentials')) {
