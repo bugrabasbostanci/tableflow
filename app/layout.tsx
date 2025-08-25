@@ -51,7 +51,7 @@ export const metadata: Metadata = {
     url: "https://tablio-deu.pages.dev",
     siteName: "Tablio - Table Converter",
     title: "Tablio - Free Online Table Converter | Excel, CSV, JSON Export",
-    description: "Convert copied table data to Excel, CSV, JSON, XML and TSV formats instantly. Free online table converter with Google Sheets integration.",
+    description: "Convert copied table data to Excel, CSV, JSON, and XML formats instantly. Free online table converter with Google Sheets integration.",
     images: [
       {
         url: "/tablio-logo.png",

@@ -51,7 +51,7 @@ export default function TermsOfService() {
                   </li>
                   <li>
                     Export converted data to multiple formats (Excel, CSV, JSON,
-                    XML, TSV)
+                    XML)
                   </li>
                   <li>Export data directly to Google Sheets</li>
                   <li>Edit and manipulate table data before export</li>

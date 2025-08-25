@@ -1,7 +1,7 @@
 {
   "name": "Tablio - Free Online Table Converter | Excel, CSV, JSON Export",
   "short_name": "Tablio",
-  "description": "Convert copied table data to Excel, CSV, JSON, XML and TSV formats instantly. Free online table converter with Google Sheets integration. No download required.",
+  "description": "Convert copied table data to Excel, CSV, JSON, and XML formats instantly. Free online table converter with Google Sheets integration. No download required.",
   "icons": [
     {
       "src": "/android-chrome-192x192.png",
