@@ -19,7 +19,7 @@ export function AppHeader() {
         </div>
       </Link>
       <p className="text-sm sm:text-base text-muted-foreground px-4 max-w-2xl mx-auto">
-        Free online table converter - Transform copied table data into Excel, CSV, PDF, HTML, JSON, and XML formats instantly. Export directly to Google Sheets or download files.
+        Free online table converter - Transform copied table data into Excel, CSV, JSON, XML and TSV formats instantly. Export directly to Google Sheets or download files.
       </p>
     </header>
   );

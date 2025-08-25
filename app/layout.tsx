@@ -3,6 +3,7 @@ import { Geist } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/sonner";
 import { StructuredData } from "@/components/seo/StructuredData";
+import { ClarityAnalytics } from "@/components/analytics/ClarityAnalytics";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -102,6 +103,7 @@ export default function RootLayout({
         <link rel="preload" href="/tablio-logo.svg" as="image" type="image/svg+xml" />
       </head>
       <body className={`${geistSans.className} antialiased dark`}>
+        <ClarityAnalytics />
         {children}
         <Toaster />
       </body>
