@@ -44,10 +44,11 @@ npm run lint
 ## Key Features Implementation
 
 The main application (`app/page.tsx`) implements:
+
 - **Clipboard Integration**: Paste table data directly from clipboard
 - **File Upload**: CSV file drag-and-drop and file input
 - **Table Editing**: Click-to-edit cells with inline editing
-- **Format Export**: Excel (XLSX), CSV, TSV, JSON, XML formats
+- **Format Export**: Excel (XLSX), CSV, JSON, XML formats
 - **Google Sheets Integration**: Direct export to Google Sheets with OAuth2 authentication
 - **Progress Indicators**: Loading states for processing and downloads
 - **Mobile Responsive**: Touch-friendly interface with mobile controls
@@ -63,7 +64,8 @@ The main application (`app/page.tsx`) implements:
 ## Data Processing Logic
 
 The application handles:
-- Tab-separated values from clipboard (Excel/Google Sheets copy format)  
+
+- Tab-separated values from clipboard (Excel/Google Sheets copy format)
 - CSV file parsing with comma separation
 - Table validation (consistent column counts)
 - Cell editing with save/cancel functionality
@@ -84,6 +86,7 @@ The application handles:
 To enable Google Sheets export functionality:
 
 1. **Google Cloud Console Setup**:
+
    - Go to [Google Cloud Console](https://console.developers.google.com/)
    - Create a new project or select an existing one
    - Enable the Google Sheets API and Google Drive API
@@ -91,6 +94,7 @@ To enable Google Sheets export functionality:
    - Add authorized redirect URIs: `http://localhost:3000/api/auth/google/callback` (for development)
 
 2. **Environment Variables**:
+
    - Copy `.env.example` to `.env.local`
    - Fill in your Google OAuth Client ID and Client Secret
    - Set `NEXTAUTH_URL` to your application URL
