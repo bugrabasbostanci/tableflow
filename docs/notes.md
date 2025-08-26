@@ -1,0 +1,1 @@
+- Google sheets'e aktar özelliği disabled edildi. Çünkü google projeyi verificate etmeden bu özellik çalışmıyor ve kullanıcılara bu şekilde çalışmayan bir özellik sunamam. Daha sonra aktif edilecek
