@@ -1,4 +1,3 @@
-import Image from "next/image";
 import Link from "next/link";
 
 export function AppHeader() {
@@ -6,15 +5,11 @@ export function AppHeader() {
     <header className="py-6 sm:py-8 text-center px-4">
       <Link href="/" className="inline-block">
         <div className="flex items-center justify-center gap-2 sm:gap-3 mb-2 hover:opacity-80 transition-opacity cursor-pointer">
-          <Image
-            src="/tablio-logo.svg"
-            alt="Tablio logo"
-            width={24}
-            height={24}
-            className="w-6 h-6 sm:w-8 sm:h-8"
-          />
+          <div className="w-6 h-6 sm:w-8 sm:h-8 bg-primary rounded-md flex items-center justify-center">
+            <span className="text-white font-bold text-sm sm:text-lg">T</span>
+          </div>
           <h1 className="text-2xl sm:text-4xl font-bold text-foreground">
-            Tablio
+            TableFlow
           </h1>
         </div>
       </Link>

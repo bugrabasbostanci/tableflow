@@ -9,4 +9,4 @@ Allow: /terms-of-service
 Disallow: /api/
 
 # Sitemap location
-Sitemap: https://tablio-deu.pages.dev/sitemap.xml
+Sitemap: https://tableflow-3bm.pages.dev/sitemap.xml

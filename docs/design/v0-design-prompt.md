@@ -1,6 +1,6 @@
 ```JSON
 {
-  "projectName": "Tablio",
+  "projectName": "TableFlow",
   "fileVersion": "1.0",
   "designTool": "v0_design_prompt",
   "promptDetails": {
@@ -28,8 +28,8 @@
     },
     "header": {
       "elements": [
-        { "type": "logo", "asset": "Tablio'nun sadeleştirilmiş yeşil logosu" },
-        { "type": "appName", "text": "Tablio", "style": "font-size: 24px, font-weight: 700" }
+        { "type": "logo", "asset": "TableFlow'nun sadeleştirilmiş yeşil logosu" },
+        { "type": "appName", "text": "TableFlow", "style": "font-size: 24px, font-weight: 700" }
       ],
       "alignment": "Merkezi"
     },

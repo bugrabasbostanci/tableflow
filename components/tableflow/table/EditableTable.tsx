@@ -2,7 +2,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Minus } from "lucide-react";
 import { EditableCell } from "./EditableCell";
-import type { TableData, EditingCell } from "@/types/tablio";
+import type { TableData, EditingCell } from "@/types/tableflow";
 
 interface EditableTableProps {
   tableData: TableData;
@@ -40,7 +40,7 @@ export function EditableTable({
       </h3>
 
       {/* Mobile table wrapper with horizontal scroll */}
-      <div className="tablio-table border rounded-lg overflow-x-auto -mx-3 sm:mx-0">
+      <div className="tableflow-table border rounded-lg overflow-x-auto -mx-3 sm:mx-0">
         <div className="min-w-max sm:min-w-0">
           <table className="w-full">
             <thead>

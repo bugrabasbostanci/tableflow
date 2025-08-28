@@ -1,7 +1,7 @@
 import { MetadataRoute } from 'next'
  
 export default function sitemap(): MetadataRoute.Sitemap {
-  const baseUrl = 'https://tablio-deu.pages.dev'
+  const baseUrl = 'https://tableflow-3bm.pages.dev'
   
   return [
     {

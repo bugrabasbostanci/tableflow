@@ -1,4 +1,4 @@
-import type { TableData } from "@/types/tablio";
+import type { TableData } from "@/types/tableflow";
 
 /**
  * Adds a new row to the table data

@@ -7,9 +7,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Download, Trash2, FileSpreadsheet, Loader2 } from "lucide-react";
+import { Download, Trash2, Loader2 } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
-import type { ExportFormat } from "@/types/tablio";
+import type { ExportFormat } from "@/types/tableflow";
 
 interface ExportControlsProps {
   fileName: string;
@@ -30,16 +30,13 @@ export function ExportControls({
   setFormat,
   onClear,
   onDownload,
-  onGoogleSheetsExport,
   isDownloading,
   showMobileControls,
 }: ExportControlsProps) {
   const isMobile = useIsMobile();
 
   return (
-    <div
-      className={`${showMobileControls ? "block" : "hidden"} sm:block`}
-    >
+    <div className={`${showMobileControls ? "block" : "hidden"} sm:block`}>
       <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-end">
         <div className="flex-1 w-full space-y-2">
           <label className="text-sm font-medium text-foreground">
@@ -48,14 +45,12 @@ export function ExportControls({
           <Input
             value={fileName}
             onChange={(e) => setFileName(e.target.value)}
-            placeholder="Can be left empty (auto: tablio-export)"
+            placeholder="Can be left empty (auto: tableflow-export)"
             className="bg-input transition-all duration-200 focus:scale-[1.02] w-full"
           />
         </div>
         <div className="w-full sm:w-auto space-y-2">
-          <label className="text-sm font-medium text-foreground">
-            Format
-          </label>
+          <label className="text-sm font-medium text-foreground">Format</label>
           <Select value={format} onValueChange={setFormat}>
             <SelectTrigger className="w-full sm:w-40 bg-input transition-all duration-200 hover:bg-input/80">
               <SelectValue />
@@ -79,6 +74,8 @@ export function ExportControls({
             <Trash2 className="w-4 h-4" />
             <span className="sm:inline">Clear</span>
           </Button>
+          {/* Google Sheets button - temporarily hidden */}
+          {/* 
           <Button
             variant="outline"
             onClick={onGoogleSheetsExport}
@@ -98,6 +95,7 @@ export function ExportControls({
               {isDownloading ? "Exporting..." : "Sheets"}
             </span>
           </Button>
+          */}
           <Button
             onClick={onDownload}
             disabled={isDownloading}

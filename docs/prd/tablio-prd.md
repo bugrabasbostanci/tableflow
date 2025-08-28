@@ -1,10 +1,10 @@
-## Tablio - Ürün Gereksinimleri Dokümanı (PRD)
+## TableFlow - Ürün Gereksinimleri Dokümanı (PRD)
 
 Doküman Sürümü: 1.1
 
 Tarih: 13.08.2025
 
-Proje Adı: Tablio
+Proje Adı: TableFlow
 
 **Sürüm 1.1 Değişiklik Notları:**
 
@@ -15,11 +15,11 @@ Proje Adı: Tablio
 
 ### 1. Projeye Genel Bakış
 
-Tablio, özellikle borsa ve finans verileriyle ilgilenen kullanıcıların, web sitelerinden kopyaladıkları tabloları analiz ve raporlama için doğrudan Excel ve diğer yapısal formatlara dönüştürmelerini sağlayan basit, hızlı ve odaklı bir web aracıdır.
+TableFlow, özellikle borsa ve finans verileriyle ilgilenen kullanıcıların, web sitelerinden kopyaladıkları tabloları analiz ve raporlama için doğrudan Excel ve diğer yapısal formatlara dönüştürmelerini sağlayan basit, hızlı ve odaklı bir web aracıdır.
 
 ### 2. Problem Tanımı
 
-Bireysel yatırımcılar, piyasa analizi yapmak için sık sık çeşitli finans ve haber sitelerindeki (hisse senedi fiyatları, temel analiz oranları, analist beklentileri vb.) tabloları inceler. Bu tabloları kendi analizlerini yapacakları Excel gibi bir ortama aktarmak istediklerinde, web sitelerinin yapısı nedeniyle genellikle düzgün bir kopyala-yapıştır işlemi yapamazlar. Verileri manuel olarak tek tek girmek ise aşırı zaman alıcı ve hataya açık bir süreçtir. Tablio, bu süreci saniyelere indirerek yatırımcıların veri toplama yerine analiz yapmaya odaklanmasını sağlar.
+Bireysel yatırımcılar, piyasa analizi yapmak için sık sık çeşitli finans ve haber sitelerindeki (hisse senedi fiyatları, temel analiz oranları, analist beklentileri vb.) tabloları inceler. Bu tabloları kendi analizlerini yapacakları Excel gibi bir ortama aktarmak istediklerinde, web sitelerinin yapısı nedeniyle genellikle düzgün bir kopyala-yapıştır işlemi yapamazlar. Verileri manuel olarak tek tek girmek ise aşırı zaman alıcı ve hataya açık bir süreçtir. TableFlow, bu süreci saniyelere indirerek yatırımcıların veri toplama yerine analiz yapmaya odaklanmasını sağlar.
 
 ### 3. Hedef Kitle (Özelleştirilmiş)
 
@@ -37,7 +37,7 @@ Bireysel yatırımcılar, piyasa analizi yapmak için sık sık çeşitli finans
 - **Haftalık Aktif Kullanıcı Sayısı:** En az 100+ haftalık aktif kullanıcıya ulaşmak.
 - **Dönüştürme Oranı:** Siteye gelen her 100 kullanıcıdan en az 30'unun başarılı bir dönüştürme yapması.
 - **Birincil Format Tercihi:** Yapılan dönüştürmelerin %80'inin **Excel (.xlsx)** olması.
-- **Geri Bildirim:** Finans odaklı forumlar, sosyal medya grupları ve Twitter'da Tablio hakkında paylaşılan olumlu kullanıcı deneyimleri.
+- **Geri Bildirim:** Finans odaklı forumlar, sosyal medya grupları ve Twitter'da TableFlow hakkında paylaşılan olumlu kullanıcı deneyimleri.
 
 ### 5. Gereksinimler ve Özellikler (MVP)
 

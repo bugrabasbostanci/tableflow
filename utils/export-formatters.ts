@@ -1,17 +1,17 @@
-import type { TableData, ExportFormat, ExportResult } from "@/types/tablio";
+import type { TableData, ExportFormat, ExportResult } from "@/types/tableflow";
 import * as XLSX from "xlsx";
 import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable";
 import type { AutoTableOptions } from "@/types/jspdf-autotable";
-import { 
-  setupPDFFont, 
-  createTurkishPDF, 
-  addPDFHeader, 
+import {
+  setupPDFFont,
+  createTurkishPDF,
+  addPDFHeader,
   processTextForPDF,
   fixTurkishCharsForPDF,
   applyFontToPDF,
   createFontHooks,
-  createPDFFooter
+  createPDFFooter,
 } from "./pdf-font-utils";
 
 /**
@@ -92,9 +92,11 @@ export async function formatAsPDF(tableData: TableData): Promise<ExportResult> {
     const availableWidth = pageWidth - 30; // 15mm margins
 
     // Process table data with font-appropriate character handling
-    const headers = tableData.headers.map(header => processTextForPDF(header, fontConfig));
-    const rows = tableData.rows.map(row => 
-      row.map(cell => processTextForPDF(cell, fontConfig))
+    const headers = tableData.headers.map((header) =>
+      processTextForPDF(header, fontConfig)
+    );
+    const rows = tableData.rows.map((row) =>
+      row.map((cell) => processTextForPDF(cell, fontConfig))
     );
 
     // Generate font hooks for consistent font application
@@ -161,16 +163,16 @@ export async function formatAsPDF(tableData: TableData): Promise<ExportResult> {
     // Fallback with basic configuration and character fixes
     const fallbackDoc = new jsPDF({
       orientation: "landscape",
-      unit: "mm", 
+      unit: "mm",
       format: "a4",
     });
 
     fallbackDoc.setFont("helvetica");
-    fallbackDoc.text("Tablio Raporu", 20, 20);
+    fallbackDoc.text("TableFlow Raporu", 20, 20);
 
     // Apply character fixes for fallback
     const processedHeaders = tableData.headers.map(fixTurkishCharsForPDF);
-    const processedRows = tableData.rows.map(row => 
+    const processedRows = tableData.rows.map((row) =>
       row.map(fixTurkishCharsForPDF)
     );
 
@@ -261,12 +263,12 @@ export function formatAsHTML(tableData: TableData): ExportResult {
     <head>
       <meta charset="UTF-8">
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
-      <title>Tablio Data Table</title>
+      <title>TableFlow Data Table</title>
       ${styles}
     </head>
     <body>
       <div class="container">
-        <h2>Tablio Data Table</h2>
+        <h2>TableFlow Data Table</h2>
         <table>
           <thead>
             <tr>${tableData.headers.map((h) => `<th>${h}</th>`).join("")}</tr>
@@ -281,7 +283,7 @@ export function formatAsHTML(tableData: TableData): ExportResult {
           </tbody>
         </table>
         <div class="footer">
-          <p>Created with Tablio - ${new Date().toLocaleDateString(
+          <p>Created with TableFlow - ${new Date().toLocaleDateString(
             "tr-TR"
           )}</p>
         </div>

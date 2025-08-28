@@ -1,10 +1,11 @@
 # OAuth Consent Screen Configuration Guide
 
-This guide provides step-by-step instructions for configuring the Google OAuth consent screen for Tablio production deployment.
+This guide provides step-by-step instructions for configuring the Google OAuth consent screen for TableFlow production deployment.
 
 ## Prerequisites
 
 Before configuring the OAuth consent screen, ensure you have:
+
 - [ ] Privacy Policy page live at: `https://tablio-deu.pages.dev/privacy-policy`
 - [ ] Terms of Service page live at: `https://tablio-deu.pages.dev/terms-of-service`
 - [ ] Valid support email address set up
@@ -13,6 +14,7 @@ Before configuring the OAuth consent screen, ensure you have:
 ## Required APIs
 
 Ensure the following APIs are enabled in your Google Cloud Console:
+
 - [ ] Google Sheets API
 - [ ] Google Drive API
 - [ ] Google Identity API
@@ -20,11 +22,13 @@ Ensure the following APIs are enabled in your Google Cloud Console:
 ## OAuth Consent Screen Configuration
 
 ### 1. Access OAuth Consent Screen
+
 1. Go to [Google Cloud Console](https://console.developers.google.com/)
 2. Select your project
 3. Navigate to **APIs & Services** → **OAuth consent screen**
 
 ### 2. Choose User Type
+
 - Select **External** (for public app available to all users)
 - Click **CREATE**
 
@@ -33,28 +37,33 @@ Ensure the following APIs are enabled in your Google Cloud Console:
 Fill in the following mandatory fields:
 
 #### Basic Information
-- **App name**: `Tablio`
+
+- **App name**: `TableFlow`
 - **User support email**: `bb0143sbw@gmail.com`
-- **App logo**: Upload Tablio logo (optional but recommended)
+- **App logo**: Upload TableFlow logo (optional but recommended)
 
 #### App Domain Information
+
 - **Application homepage**: `https://tablio-deu.pages.dev`
 - **Privacy Policy link**: `https://tablio-deu.pages.dev/privacy-policy`
 - **Terms of Service link**: `https://tablio-deu.pages.dev/terms-of-service`
 
 #### Developer Contact Information
+
 - **Developer contact information**: `bb0143sbw@gmail.com`
 
 #### App Description
+
 ```
-Tablio is a web-based table conversion tool that helps users convert table data from various formats (copied data, CSV files) into Excel, CSV, JSON, XML, and other structured formats. Users can also export data directly to Google Sheets with secure OAuth authentication.
+TableFlow is a web-based table conversion tool that helps users convert table data from various formats (copied data, CSV files) into Excel, CSV, JSON, XML, and other structured formats. Users can also export data directly to Google Sheets with secure OAuth authentication.
 ```
 
 ### 4. Scopes Configuration
 
-Add the following OAuth scopes that Tablio currently uses:
+Add the following OAuth scopes that TableFlow currently uses:
 
 #### Required Scopes:
+
 - `openid` - For user identification
 - `https://www.googleapis.com/auth/userinfo.email` - For user email access
 - `https://www.googleapis.com/auth/userinfo.profile` - For user profile information
@@ -62,37 +71,46 @@ Add the following OAuth scopes that Tablio currently uses:
 - `https://www.googleapis.com/auth/spreadsheets` - For creating and editing Google Sheets
 
 #### Scope Justifications:
+
 Provide clear justifications for sensitive scopes:
 
 **Google Drive API (`drive.file`)**:
+
 - Purpose: Create and save exported table files to user's Google Drive
 - Data usage: Only creates new files based on user's converted table data
 - User benefit: Allows seamless export of converted data to user's personal storage
 
 **Google Sheets API (`spreadsheets`)**:
+
 - Purpose: Create new Google Sheets with user's converted table data
 - Data usage: Creates new spreadsheets with user's processed table content
 - User benefit: Direct export to Google Sheets for immediate data analysis
 
 ### 5. Test Users (During Development)
+
 While in testing mode, add test user emails:
+
 - Add your development team email addresses
 - Include any beta testers' email addresses
 
 ### 6. OAuth Client Configuration
 
 #### Authorized Redirect URIs
+
 Add the following redirect URIs:
+
 - Development: `http://localhost:3000/api/auth/google/callback`
 - Production: `https://tablio-deu.pages.dev/api/auth/google/callback`
 
 #### Authorized JavaScript Origins
+
 - Development: `http://localhost:3000`
 - Production: `https://tablio-deu.pages.dev`
 
 ## Publishing Process
 
 ### Phase 1: Testing Mode (Current)
+
 - App is in testing mode
 - Only test users can access
 - Refresh tokens expire in 7 days
@@ -103,11 +121,13 @@ Add the following redirect URIs:
 ⚠️ **WARNING: This is a one-way process and cannot be reversed!**
 
 1. **Prepare for Publishing**
+
    - Ensure all required fields are filled
    - Verify all links are working
    - Test with multiple users in testing mode
 
 2. **Publish App**
+
    - In OAuth consent screen, click **"PUBLISH APP"**
    - Status changes from "Testing" to "In production"
    - Click **"Prepare for Verification"** if prompted
@@ -120,6 +140,7 @@ Add the following redirect URIs:
 ### Verification Requirements
 
 #### For Sensitive/Restricted Scopes
+
 Google may require additional verification for `drive.file` and `spreadsheets` scopes:
 
 - **Security Assessment**: May require third-party security audit
@@ -128,6 +149,7 @@ Google may require additional verification for `drive.file` and `spreadsheets` s
 - **Domain Verification**: Proof of domain ownership
 
 #### Timeline
+
 - **Review Process**: 1-8 weeks
 - **Response Time**: Google will email updates on verification status
 - **Resubmission**: May be required if additional information is needed
@@ -135,12 +157,14 @@ Google may require additional verification for `drive.file` and `spreadsheets` s
 ## Post-Publishing Considerations
 
 ### User Experience Changes
+
 - ✅ No more "This app isn't verified" warning
 - ✅ Refresh tokens won't expire automatically
 - ✅ App available to all Google users
 - ✅ Professional appearance in OAuth consent
 
 ### Monitoring and Maintenance
+
 - Monitor OAuth consent screen for any Google policy changes
 - Update legal pages as needed
 - Maintain valid support email
@@ -149,18 +173,22 @@ Google may require additional verification for `drive.file` and `spreadsheets` s
 ## Troubleshooting Common Issues
 
 ### Verification Rejected
+
 If verification is rejected:
+
 1. Review Google's feedback carefully
 2. Update documentation and security measures
 3. Revise privacy policy if needed
 4. Resubmit with requested improvements
 
 ### Domain Verification Issues
+
 - Ensure domain is properly verified in Google Search Console
 - Check DNS records and SSL certificate
 - Verify all redirect URIs match exactly
 
 ### Scope Permission Issues
+
 - Ensure scope justifications are clear and specific
 - Document exactly how each permission is used
 - Provide screenshots or examples if helpful

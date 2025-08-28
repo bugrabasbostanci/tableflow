@@ -1,4 +1,4 @@
-import type { TableData } from '@/types/tablio';
+import type { TableData } from "@/types/tableflow";
 
 /**
  * Parses clipboard data (tab-separated format from Excel/Google Sheets)
@@ -21,14 +21,13 @@ export function parseClipboardData(text: string): TableData | null {
   return { headers, rows: validRows };
 }
 
-
 /**
  * Validates table data structure
  */
 export function validateTableData(data: TableData): boolean {
   if (!data.headers || data.headers.length === 0) return false;
   if (!data.rows || data.rows.length === 0) return false;
-  
+
   const expectedColumns = data.headers.length;
-  return data.rows.every(row => row.length === expectedColumns);
+  return data.rows.every((row) => row.length === expectedColumns);
 }

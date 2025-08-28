@@ -1,4 +1,4 @@
-import type { LoadingState } from "@/types/tablio";
+import type { LoadingState } from "@/types/tableflow";
 
 /**
  * Common loading messages for different operations
@@ -7,13 +7,13 @@ export const LoadingMessages = {
   // Processing messages
   ANALYZING_DATA: "Analyzing data...",
   PROCESSING_LARGE_DATASET: "Processing large dataset...",
-  PROCESSING_CHUNKS: (current: number, total: number) => 
+  PROCESSING_CHUNKS: (current: number, total: number) =>
     `Processing data... (${current}/${total})`,
   PREPARING_TABLE: "Preparing table...",
   COMPLETING: "Completing...",
 
   // Download messages
-  CONVERTING_FORMAT: (format: string) => 
+  CONVERTING_FORMAT: (format: string) =>
     `Converting to ${format.toUpperCase()} format...`,
   CREATING_LARGE_FILE: "Creating large file...",
   PREPARING_FILE: "Preparing file...",

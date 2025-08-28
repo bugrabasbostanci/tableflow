@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Tablio is a web application for converting copied table data into Excel, CSV, and other structured formats. Built for international users who need to convert table data from websites into formats suitable for analysis and processing.
+TableFlow is a web application for converting copied table data into Excel, CSV, and other structured formats. Built for international users who need to convert table data from websites into formats suitable for analysis and processing.
 
 ## Tech Stack
 
@@ -36,7 +36,7 @@ npm run lint
 - `app/` - Next.js App Router pages and layouts
   - `page.tsx` - Main application component with table conversion logic
   - `layout.tsx` - Root layout with English locale and dark theme
-  - `globals.css` - Tailwind CSS with custom Tablio styles
+  - `globals.css` - Tailwind CSS with custom TableFlow styles
 - `components/ui/` - shadcn/ui components (Button, Card, Input, Select)
 - `lib/utils.ts` - Utility functions for component variants
 - `docs/` - Project documentation including PRD and design notes
@@ -76,7 +76,7 @@ The application handles:
 
 - Uses Tailwind CSS with custom CSS variables for theming
 - Dark mode as default (`dark` class on body)
-- Custom `.tablio-*` classes for app-specific styling
+- Custom `.tableflow-*` classes for app-specific styling
 - Responsive design with `sm:` breakpoints
 - Hover and focus states with smooth transitions
 - Custom scrollbar styling for table overflow

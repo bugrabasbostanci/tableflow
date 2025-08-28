@@ -1,14 +1,13 @@
 import { useCallback } from "react";
 import { toast } from "sonner";
 import { parseClipboardData } from "@/utils/data-parsers";
-import type { TableData } from "@/types/tablio";
+import type { TableData } from "@/types/tableflow";
 
 interface UseDataInputProps {
   onDataLoaded: (data: TableData, fileName?: string) => void;
 }
 
 export function useDataInput({ onDataLoaded }: UseDataInputProps) {
-
   const handlePaste = useCallback(async () => {
     try {
       const text = await navigator.clipboard.readText();

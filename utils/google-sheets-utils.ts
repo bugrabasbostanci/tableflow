@@ -1,19 +1,19 @@
 /**
- * Google Sheets integration utilities for Tablio
+ * Google Sheets integration utilities for TableFlow
  */
 
-import type { 
-  TableData, 
-  GoogleSheetsExportOptions, 
+import type {
+  TableData,
+  GoogleSheetsExportOptions,
   GoogleSheetsExportResult,
-  GoogleOAuthState 
-} from '@/types/tablio';
+  GoogleOAuthState,
+} from "@/types/tableflow";
 
 /**
  * Check if user is authenticated with Google
  */
 export function checkGoogleAuthStatus(): GoogleOAuthState {
-  if (typeof window === 'undefined') {
+  if (typeof window === "undefined") {
     return { isAuthenticated: false };
   }
 
@@ -26,12 +26,12 @@ export function checkGoogleAuthStatus(): GoogleOAuthState {
  * Initiate Google OAuth flow
  */
 export async function initiateGoogleAuth(): Promise<{ authUrl: string }> {
-  const response = await fetch('/api/auth/google');
-  
+  const response = await fetch("/api/auth/google");
+
   if (!response.ok) {
-    throw new Error('OAuth initialization error');
+    throw new Error("OAuth initialization error");
   }
-  
+
   return response.json();
 }
 
@@ -42,16 +42,18 @@ export async function exportToGoogleSheets(
   tableData: TableData,
   options?: GoogleSheetsExportOptions
 ): Promise<GoogleSheetsExportResult> {
-  const response = await fetch('/api/export/google-sheets', {
-    method: 'POST',
+  const response = await fetch("/api/export/google-sheets", {
+    method: "POST",
     headers: {
-      'Content-Type': 'application/json',
+      "Content-Type": "application/json",
     },
     body: JSON.stringify({
       tableData,
       options: {
-        title: options?.title || `Tablio Export ${new Date().toLocaleDateString('en-US')}`,
-        sheetName: options?.sheetName || 'Tablio Data',
+        title:
+          options?.title ||
+          `TableFlow Export ${new Date().toLocaleDateString("en-US")}`,
+        sheetName: options?.sheetName || "TableFlow Data",
         makePublic: options?.makePublic || false,
         ...options,
       },
@@ -61,7 +63,7 @@ export async function exportToGoogleSheets(
   const result = await response.json();
 
   if (!response.ok) {
-    throw new Error(result.error || 'Google Sheets export error');
+    throw new Error(result.error || "Google Sheets export error");
   }
 
   return result;
@@ -74,8 +76,8 @@ export function openGoogleAuthPopup(authUrl: string): Promise<boolean> {
   return new Promise((resolve) => {
     const popup = window.open(
       authUrl,
-      'google-oauth',
-      'width=500,height=600,scrollbars=yes,resizable=yes'
+      "google-oauth",
+      "width=500,height=600,scrollbars=yes,resizable=yes"
     );
 
     if (!popup) {
@@ -90,10 +92,10 @@ export function openGoogleAuthPopup(authUrl: string): Promise<boolean> {
         return;
       }
 
-      if (event.data.type === 'GOOGLE_AUTH_SUCCESS') {
+      if (event.data.type === "GOOGLE_AUTH_SUCCESS") {
         cleanup();
         resolve(true);
-      } else if (event.data.type === 'GOOGLE_AUTH_ERROR') {
+      } else if (event.data.type === "GOOGLE_AUTH_ERROR") {
         cleanup();
         resolve(false);
       }
@@ -101,7 +103,7 @@ export function openGoogleAuthPopup(authUrl: string): Promise<boolean> {
 
     // Cleanup function
     const cleanup = () => {
-      window.removeEventListener('message', messageListener);
+      window.removeEventListener("message", messageListener);
       if (checkClosed) {
         clearInterval(checkClosed);
       }
@@ -114,7 +116,7 @@ export function openGoogleAuthPopup(authUrl: string): Promise<boolean> {
     };
 
     // Add message listener
-    window.addEventListener('message', messageListener);
+    window.addEventListener("message", messageListener);
 
     // Fallback: Check if popup is manually closed
     const checkClosed = setInterval(() => {
@@ -144,18 +146,18 @@ export async function handleGoogleSheetsExportFlow(
     return await exportToGoogleSheets(tableData, options);
   } catch (error) {
     // If authentication fails, initiate OAuth flow
-    if (error instanceof Error && error.message.includes('token')) {
+    if (error instanceof Error && error.message.includes("token")) {
       const { authUrl } = await initiateGoogleAuth();
       const authSuccess = await openGoogleAuthPopup(authUrl);
-      
+
       if (!authSuccess) {
-        throw new Error('Google OAuth authorization failed');
+        throw new Error("Google OAuth authorization failed");
       }
 
       // Retry export after authentication
       return await exportToGoogleSheets(tableData, options);
     }
-    
+
     throw error;
   }
 }
@@ -167,11 +169,11 @@ export function validateTableDataForExport(tableData: TableData): boolean {
   if (!tableData) return false;
   if (!tableData.headers || tableData.headers.length === 0) return false;
   if (!Array.isArray(tableData.rows)) return false;
-  
+
   // Check if all rows have consistent column count
   const expectedColumnCount = tableData.headers.length;
-  return tableData.rows.every(row => 
-    Array.isArray(row) && row.length <= expectedColumnCount
+  return tableData.rows.every(
+    (row) => Array.isArray(row) && row.length <= expectedColumnCount
   );
 }
 
@@ -181,9 +183,9 @@ export function validateTableDataForExport(tableData: TableData): boolean {
 export function sanitizeSheetTitle(title: string): string {
   // Google Sheets title restrictions:
   // - Max 100 characters
-  // - No special characters like [ ] / \ ? * : 
+  // - No special characters like [ ] / \ ? * :
   return title
-    .replace(/[\[\]\/\\?\*:]/g, '')
+    .replace(/[\[\]\/\\?\*:]/g, "")
     .trim()
     .substring(0, 100);
 }
@@ -191,15 +193,15 @@ export function sanitizeSheetTitle(title: string): string {
 /**
  * Generate default sheet title with current date
  */
-export function generateDefaultSheetTitle(prefix = 'Tablio Export'): string {
+export function generateDefaultSheetTitle(prefix = "TableFlow Export"): string {
   const now = new Date();
-  const dateStr = now.toLocaleDateString('tr-TR', {
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit',
+  const dateStr = now.toLocaleDateString("tr-TR", {
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
   });
-  
+
   return sanitizeSheetTitle(`${prefix} ${dateStr}`);
 }

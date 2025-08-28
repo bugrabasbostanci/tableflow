@@ -1,7 +1,11 @@
-import { NextRequest, NextResponse } from 'next/server';
-import type { TableData, GoogleSheetsExportOptions, GoogleSheetsExportResult } from '@/types/tablio';
+import { NextRequest, NextResponse } from "next/server";
+import type {
+  TableData,
+  GoogleSheetsExportOptions,
+  GoogleSheetsExportResult,
+} from "@/types/tableflow";
 
-export const runtime = 'edge';
+export const runtime = "edge";
 
 interface SpreadsheetCreateResponse {
   spreadsheetId: string;
@@ -13,24 +17,33 @@ interface SpreadsheetCreateResponse {
   }>;
 }
 
-async function createSpreadsheet(accessToken: string, title: string, sheetName: string = 'Tablio Data'): Promise<SpreadsheetCreateResponse> {
-  const response = await fetch('https://sheets.googleapis.com/v4/spreadsheets', {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${accessToken}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      properties: {
-        title: title,
+async function createSpreadsheet(
+  accessToken: string,
+  title: string,
+  sheetName: string = "TableFlow Data"
+): Promise<SpreadsheetCreateResponse> {
+  const response = await fetch(
+    "https://sheets.googleapis.com/v4/spreadsheets",
+    {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        "Content-Type": "application/json",
       },
-      sheets: [{
+      body: JSON.stringify({
         properties: {
-          title: sheetName,
+          title: title,
         },
-      }],
-    }),
-  });
+        sheets: [
+          {
+            properties: {
+              title: sheetName,
+            },
+          },
+        ],
+      }),
+    }
+  );
 
   if (!response.ok) {
     const error = await response.text();
@@ -45,18 +58,18 @@ async function updateSheetData(
   spreadsheetId: string,
   headers: string[],
   rows: string[][],
-  sheetName: string = 'Tablio Data'
+  sheetName: string = "TableFlow Data"
 ) {
   // Prepare all data including headers
   const allData = [headers, ...rows];
-  
+
   // Convert to the format expected by the API
-  const values = allData.map(row => 
-    row.map(cell => cell || '') // Ensure no null values
+  const values = allData.map(
+    (row) => row.map((cell) => cell || "") // Ensure no null values
   );
 
   // Calculate the actual range based on data dimensions
-  const maxCol = Math.max(headers.length, ...rows.map(row => row.length));
+  const maxCol = Math.max(headers.length, ...rows.map((row) => row.length));
   const endColumn = String.fromCharCode(65 + Math.min(maxCol - 1, 25)); // A-Z
   const range = `A1:${endColumn}${allData.length}`;
 
@@ -65,12 +78,14 @@ async function updateSheetData(
 
   // Use the simpler values API with proper range encoding
   const response = await fetch(
-    `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${encodeURIComponent(fullRange)}?valueInputOption=RAW`,
+    `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${encodeURIComponent(
+      fullRange
+    )}?valueInputOption=RAW`,
     {
-      method: 'PUT',
+      method: "PUT",
       headers: {
-        'Authorization': `Bearer ${accessToken}`,
-        'Content-Type': 'application/json',
+        Authorization: `Bearer ${accessToken}`,
+        "Content-Type": "application/json",
       },
       body: JSON.stringify({
         values: values,
@@ -86,18 +101,21 @@ async function updateSheetData(
   return response.json();
 }
 
-async function makeSpreadsheetPublic(accessToken: string, spreadsheetId: string) {
+async function makeSpreadsheetPublic(
+  accessToken: string,
+  spreadsheetId: string
+) {
   const response = await fetch(
     `https://www.googleapis.com/drive/v3/files/${spreadsheetId}/permissions`,
     {
-      method: 'POST',
+      method: "POST",
       headers: {
-        'Authorization': `Bearer ${accessToken}`,
-        'Content-Type': 'application/json',
+        Authorization: `Bearer ${accessToken}`,
+        "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        role: 'reader',
-        type: 'anyone',
+        role: "reader",
+        type: "anyone",
       }),
     }
   );
@@ -113,30 +131,35 @@ async function makeSpreadsheetPublic(accessToken: string, spreadsheetId: string)
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { tableData, options }: { tableData: TableData; options?: GoogleSheetsExportOptions } = body;
+    const {
+      tableData,
+      options,
+    }: { tableData: TableData; options?: GoogleSheetsExportOptions } = body;
 
     if (!tableData || !tableData.headers || !tableData.rows) {
       return NextResponse.json(
-        { error: 'Invalid table data' },
+        { error: "Invalid table data" },
         { status: 400 }
       );
     }
 
     // Get access token from cookies
-    const accessToken = request.cookies.get('google_access_token')?.value;
+    const accessToken = request.cookies.get("google_access_token")?.value;
 
     if (!accessToken) {
       return NextResponse.json(
-        { error: 'Google OAuth token not found. Please sign in again.' },
+        { error: "Google OAuth token not found. Please sign in again." },
         { status: 401 }
       );
     }
 
     // Create new Google Spreadsheet
-    const title = options?.title || `Tablio Export ${new Date().toLocaleDateString('en-US')}`;
-    const sheetName = options?.sheetName || 'Tablio Data';
+    const title =
+      options?.title ||
+      `TableFlow Export ${new Date().toLocaleDateString("en-US")}`;
+    const sheetName = options?.sheetName || "TableFlow Data";
     const spreadsheet = await createSpreadsheet(accessToken, title, sheetName);
-    
+
     // Update sheet with data
     await updateSheetData(
       accessToken,
@@ -151,7 +174,7 @@ export async function POST(request: NextRequest) {
       try {
         await makeSpreadsheetPublic(accessToken, spreadsheet.spreadsheetId);
       } catch (error) {
-        console.warn('Could not set public access:', error);
+        console.warn("Could not set public access:", error);
       }
     }
 
@@ -159,27 +182,28 @@ export async function POST(request: NextRequest) {
       spreadsheetId: spreadsheet.spreadsheetId,
       spreadsheetUrl: `https://docs.google.com/spreadsheets/d/${spreadsheet.spreadsheetId}/edit`,
       success: true,
-      message: 'Successfully exported to Google Sheets',
+      message: "Successfully exported to Google Sheets",
     };
 
     return NextResponse.json(result);
   } catch (error) {
-    console.error('Google Sheets export error:', error);
-    
-    let errorMessage = 'An error occurred during Google Sheets export';
+    console.error("Google Sheets export error:", error);
+
+    let errorMessage = "An error occurred during Google Sheets export";
     if (error instanceof Error) {
-      if (error.message.includes('insufficient authentication scopes') || 
-          error.message.includes('Invalid Credentials')) {
-        errorMessage = 'Insufficient permissions. Please sign in again.';
-      } else if (error.message.includes('invalid_grant') ||
-                 error.message.includes('Token has been expired or revoked')) {
-        errorMessage = 'Session expired. Please sign in again.';
+      if (
+        error.message.includes("insufficient authentication scopes") ||
+        error.message.includes("Invalid Credentials")
+      ) {
+        errorMessage = "Insufficient permissions. Please sign in again.";
+      } else if (
+        error.message.includes("invalid_grant") ||
+        error.message.includes("Token has been expired or revoked")
+      ) {
+        errorMessage = "Session expired. Please sign in again.";
       }
     }
 
-    return NextResponse.json(
-      { error: errorMessage },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
 }

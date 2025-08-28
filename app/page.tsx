@@ -4,47 +4,47 @@ import type React from "react";
 
 import { useState, useCallback } from "react";
 import { useLoading } from "@/hooks/use-loading";
-import { AppHeader } from "@/components/tablio/layout/AppHeader";
-import { ExportControls } from "@/components/tablio/layout/ExportControls";
-import { MobileControlsToggle } from "@/components/tablio/layout/MobileControlsToggle";
-import { AppFooter } from "@/components/tablio/layout/AppFooter";
+import { AppHeader } from "@/components/tableflow/layout/AppHeader";
+import { ExportControls } from "@/components/tableflow/layout/ExportControls";
+import { MobileControlsToggle } from "@/components/tableflow/layout/MobileControlsToggle";
+import { AppFooter } from "@/components/tableflow/layout/AppFooter";
 import { toast } from "sonner";
-import type { TableData, ExportFormat } from "@/types/tablio";
+import type { TableData, ExportFormat } from "@/types/tableflow";
 import { formatTableData } from "@/utils/export-formatters";
 import { getTableStats } from "@/utils/table-operations";
-import { 
-  handleGoogleSheetsExportFlow, 
+import {
+  handleGoogleSheetsExportFlow,
   validateTableDataForExport,
   generateDefaultSheetTitle,
-  sanitizeSheetTitle
+  sanitizeSheetTitle,
 } from "@/utils/google-sheets-utils";
-import { SkeletonTable } from "@/components/tablio/feedback/SkeletonTable";
-import { ProcessingLoadingOverlay } from "@/components/tablio/feedback/ProcessingLoadingOverlay";
-import { DownloadLoadingOverlay } from "@/components/tablio/feedback/DownloadLoadingOverlay";
-import { DataInput } from "@/components/tablio/input/DataInput";
+import { SkeletonTable } from "@/components/tableflow/feedback/SkeletonTable";
+import { ProcessingLoadingOverlay } from "@/components/tableflow/feedback/ProcessingLoadingOverlay";
+import { DownloadLoadingOverlay } from "@/components/tableflow/feedback/DownloadLoadingOverlay";
+import { DataInput } from "@/components/tableflow/input/DataInput";
 import { useDataInput } from "@/hooks/use-data-input";
-import { EditableTable } from "@/components/tablio/table/EditableTable";
-import { TableControls } from "@/components/tablio/table/TableControls";
+import { EditableTable } from "@/components/tableflow/table/EditableTable";
+import { TableControls } from "@/components/tableflow/table/TableControls";
 import { useTableEditor } from "@/hooks/use-table-editor";
 import { ContentSections } from "@/components/seo/ContentSections";
 
-export default function TablioApp() {
+export default function TableFlowApp() {
   const [tableData, setTableData] = useState<TableData | null>(null);
   const [fileName, setFileName] = useState("");
   const [format, setFormat] = useState<ExportFormat>("xlsx");
   const [showMobileControls, setShowMobileControls] = useState(false);
-  const { 
-    loadingState, 
-    startLoading, 
-    updateProgress, 
-    stopLoading, 
-    isProcessing, 
-    isDownloading 
+  const {
+    loadingState,
+    startLoading,
+    updateProgress,
+    stopLoading,
+    isProcessing,
+    isDownloading,
   } = useLoading();
 
   const processData = useCallback(
     async (parsed: TableData, fileName?: string) => {
-      startLoading('processing', "Analyzing data...");
+      startLoading("processing", "Analyzing data...");
       updateProgress(20);
 
       const stats = getTableStats(parsed);
@@ -52,13 +52,16 @@ export default function TablioApp() {
 
       if (isLargeDataset) {
         updateProgress(40, "Processing large dataset...");
-        
+
         // For large datasets, allow UI updates during processing
         const chunkSize = 1000;
         const totalChunks = Math.ceil(parsed.rows.length / chunkSize);
 
         for (let i = 0; i < totalChunks; i++) {
-          updateProgress(40 + (i / totalChunks) * 40, `Processing data... (${i + 1}/${totalChunks})`);
+          updateProgress(
+            40 + (i / totalChunks) * 40,
+            `Processing data... (${i + 1}/${totalChunks})`
+          );
 
           // Allow UI to update every few chunks
           if (i % 10 === 0) {
@@ -82,7 +85,7 @@ export default function TablioApp() {
       await new Promise((resolve) => requestAnimationFrame(resolve));
 
       updateProgress(100);
-      
+
       // Brief completion state
       setTimeout(() => {
         stopLoading();
@@ -92,9 +95,7 @@ export default function TablioApp() {
       toast.success(
         `Table loaded successfully! Loaded ${
           finalStats.isLargeDataset ? "large " : ""
-        }table with ${finalStats.rows} rows and ${
-          finalStats.columns
-        } columns.`
+        }table with ${finalStats.rows} rows and ${finalStats.columns} columns.`
       );
     },
     [startLoading, updateProgress, stopLoading]
@@ -118,7 +119,7 @@ export default function TablioApp() {
 
   const handleClear = useCallback(() => {
     setTableData(null);
-    setFileName("tablio-file");
+    setFileName("tableflow-file");
     setFormat("xlsx");
     setShowMobileControls(false);
     toast.success("Data cleared: You can paste a new table.");
@@ -130,7 +131,10 @@ export default function TablioApp() {
     const stats = getTableStats(tableData);
     const isLargeDataset = stats.isLargeDataset;
 
-    startLoading('downloading', `Converting to ${format.toUpperCase()} format...`);
+    startLoading(
+      "downloading",
+      `Converting to ${format.toUpperCase()} format...`
+    );
     updateProgress(25);
 
     const { content, mimeType, fileExtension } = await formatTableData(
@@ -153,7 +157,7 @@ export default function TablioApp() {
     updateProgress(95, "Starting download...");
 
     // Use default name if fileName is empty
-    const finalFileName = fileName.trim() || "tablio-export";
+    const finalFileName = fileName.trim() || "tableflow-export";
 
     link.setAttribute("href", url);
     link.setAttribute("download", `${finalFileName}.${fileExtension}`);
@@ -164,7 +168,7 @@ export default function TablioApp() {
     document.body.removeChild(link);
 
     updateProgress(100);
-    
+
     // Brief completion state
     setTimeout(() => {
       stopLoading();
@@ -187,20 +191,20 @@ export default function TablioApp() {
       return;
     }
 
-    startLoading('downloading', "Connecting to Google Sheets...");
+    startLoading("downloading", "Connecting to Google Sheets...");
 
     try {
       updateProgress(25, "Verifying your Google account...");
 
       // Use user's filename or generate default title
       const userFileName = fileName.trim();
-      const sheetTitle = userFileName 
-        ? sanitizeSheetTitle(userFileName) 
+      const sheetTitle = userFileName
+        ? sanitizeSheetTitle(userFileName)
         : generateDefaultSheetTitle();
-      const sheetTabName = userFileName 
-        ? sanitizeSheetTitle(userFileName) 
-        : "Tablio Data";
-        
+      const sheetTabName = userFileName
+        ? sanitizeSheetTitle(userFileName)
+        : "TableFlow Data";
+
       const result = await handleGoogleSheetsExportFlow(tableData, {
         title: sheetTitle,
         sheetName: sheetTabName,
@@ -221,7 +225,7 @@ export default function TablioApp() {
           {
             action: {
               label: "Open in Google Sheets",
-              onClick: () => window.open(result.spreadsheetUrl, '_blank')
+              onClick: () => window.open(result.spreadsheetUrl, "_blank"),
             },
             duration: 8000,
           }
@@ -231,17 +235,25 @@ export default function TablioApp() {
       }
     } catch (error) {
       console.error("Google Sheets export error:", error);
-      
+
       stopLoading();
 
       let errorMessage = "An error occurred during Google Sheets export.";
-      
+
       if (error instanceof Error) {
-        if (error.message.includes("OAuth") || error.message.includes("authorization")) {
-          errorMessage = "Google account authorization failed. Please try again.";
+        if (
+          error.message.includes("OAuth") ||
+          error.message.includes("authorization")
+        ) {
+          errorMessage =
+            "Google account authorization failed. Please try again.";
         } else if (error.message.includes("token")) {
-          errorMessage = "Access to your Google account has expired. Please sign in again.";
-        } else if (error.message.includes("network") || error.message.includes("fetch")) {
+          errorMessage =
+            "Access to your Google account has expired. Please sign in again.";
+        } else if (
+          error.message.includes("network") ||
+          error.message.includes("fetch")
+        ) {
           errorMessage = "Check your internet connection and try again.";
         }
       }
@@ -252,7 +264,6 @@ export default function TablioApp() {
       });
     }
   }, [tableData, fileName, startLoading, updateProgress, stopLoading]);
-
 
   return (
     <div
@@ -274,9 +285,7 @@ export default function TablioApp() {
                 <SkeletonTable />
               </div>
             ) : (
-              <DataInput
-                onPaste={dataInputProps.handlePaste}
-              />
+              <DataInput onPaste={dataInputProps.handlePaste} />
             )}
           </div>
         ) : (
@@ -326,9 +335,7 @@ export default function TablioApp() {
           </div>
         )}
         {/* SEO Content - Only show when no table data */}
-        {!tableData && !isProcessing && (
-          <ContentSections />
-        )}
+        {!tableData && !isProcessing && <ContentSections />}
       </main>
 
       <AppFooter />

@@ -40,7 +40,7 @@ export function fixTurkishCharsForPDF(text: string): string {
 export async function setupPDFFont(doc: jsPDF): Promise<FontLoadResult> {
   let fontLoaded = false;
   let fontName = "helvetica"; // Default fallback
-  
+
   try {
     fontLoaded = await loadTurkishFont(doc);
     fontName = "helvetica"; // Always use helvetica as loadTurkishFont registers with helvetica encoding
@@ -61,14 +61,18 @@ export async function setupPDFFont(doc: jsPDF): Promise<FontLoadResult> {
   return {
     fontLoaded,
     fontName,
-    shouldFixTurkishChars: !fontLoaded
+    shouldFixTurkishChars: !fontLoaded,
   };
 }
 
 /**
  * Applies font configuration to PDF document
  */
-export function applyFontToPDF(doc: jsPDF, fontConfig: FontLoadResult, fontSize?: number): void {
+export function applyFontToPDF(
+  doc: jsPDF,
+  fontConfig: FontLoadResult,
+  fontSize?: number
+): void {
   doc.setFont(fontConfig.fontName);
   if (fontSize) {
     doc.setFontSize(fontSize);
@@ -78,7 +82,10 @@ export function applyFontToPDF(doc: jsPDF, fontConfig: FontLoadResult, fontSize?
 /**
  * Processes text for PDF output, applying Turkish character fixes if needed
  */
-export function processTextForPDF(text: string, fontConfig: FontLoadResult): string {
+export function processTextForPDF(
+  text: string,
+  fontConfig: FontLoadResult
+): string {
   return fontConfig.shouldFixTurkishChars ? fixTurkishCharsForPDF(text) : text;
 }
 
@@ -101,7 +108,7 @@ export function createTurkishPDF(): jsPDF {
 export function addPDFHeader(doc: jsPDF, fontConfig: FontLoadResult): void {
   // Add title
   applyFontToPDF(doc, fontConfig, 16);
-  const title = processTextForPDF("Tablio Raporu", fontConfig);
+  const title = processTextForPDF("TableFlow Raporu", fontConfig);
   doc.text(title, 20, 20);
 
   // Add generation date
@@ -112,7 +119,7 @@ export function addPDFHeader(doc: jsPDF, fontConfig: FontLoadResult): void {
     hour: "2-digit",
     minute: "2-digit",
   });
-  
+
   applyFontToPDF(doc, fontConfig, 10);
   const processedDate = processTextForPDF(dateText, fontConfig);
   doc.text(processedDate, 20, 30);
@@ -137,17 +144,20 @@ export function createFontHooks(fontConfig: FontLoadResult) {
       if (fontConfig.fontLoaded) {
         data.doc.setFont(fontConfig.fontName);
       }
-    }
+    },
   };
 }
 
 /**
  * Creates footer with page numbers and summary info
  */
-export function createPDFFooter(fontConfig: FontLoadResult, tableData: { headers: string[], rows: string[][] }) {
+export function createPDFFooter(
+  fontConfig: FontLoadResult,
+  tableData: { headers: string[]; rows: string[][] }
+) {
   return function (data: any) {
     const doc = data.doc;
-    
+
     // Type-safe way to get page count
     const docInternal = doc.internal as any;
     const pageCount = docInternal.getNumberOfPages();
@@ -163,12 +173,15 @@ export function createPDFFooter(fontConfig: FontLoadResult, tableData: { headers
     doc.setTextColor(100, 100, 100);
 
     // Page number
-    const pageText = processTextForPDF(`Sayfa ${data.pageNumber} / ${pageCount}`, fontConfig);
+    const pageText = processTextForPDF(
+      `Sayfa ${data.pageNumber} / ${pageCount}`,
+      fontConfig
+    );
     doc.text(pageText, data.settings.margin.left, pageHeight - 8);
 
     // Summary info
     const summaryText = processTextForPDF(
-      `${tableData.rows.length} records • ${tableData.headers.length} columns`, 
+      `${tableData.rows.length} records • ${tableData.headers.length} columns`,
       fontConfig
     );
     doc.text(summaryText, pageWidth - 50, pageHeight - 8);

@@ -1,6 +1,6 @@
 {
-  "name": "Tablio - Free Online Table Converter | Excel, CSV, JSON Export",
-  "short_name": "Tablio",
+  "name": "TableFlow - Free Online Table Converter | Excel, CSV, JSON Export",
+  "short_name": "TableFlow",
   "description": "Convert copied table data to Excel, CSV, JSON, and XML formats instantly. Free online table converter with Google Sheets integration. No download required.",
   "icons": [
     {
@@ -33,13 +33,17 @@
   "start_url": "/",
   "scope": "/",
   "lang": "en",
-  "categories": ["utilities", "productivity", "business"],
+  "categories": [
+    "utilities",
+    "productivity",
+    "business"
+  ],
   "screenshots": [
     {
       "src": "/tablio-logo.png",
       "sizes": "1200x630",
       "type": "image/png",
-      "label": "Tablio Table Converter Interface"
+      "label": "TableFlow Table Converter Interface"
     }
   ]
 }

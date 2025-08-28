@@ -1,6 +1,6 @@
-# Tablio - Arayüz Tasarım Kılavuzu (v1.0)
+# TableFlow - Arayüz Tasarım Kılavuzu (v1.0)
 
-Bu doküman, Tablio uygulamasının v1 sürümü için hedeflenen kullanıcı arayüzü (UI) ve kullanıcı deneyimi (UX) prensiplerini detaylandırmaktadır. Amaç, modern, minimalist ve kullanıcıyı hedefine en hızlı şekilde ulaştıran bir arayüz oluşturmaktır.
+Bu doküman, TableFlow uygulamasının v1 sürümü için hedeflenen kullanıcı arayüzü (UI) ve kullanıcı deneyimi (UX) prensiplerini detaylandırmaktadır. Amaç, modern, minimalist ve kullanıcıyı hedefine en hızlı şekilde ulaştıran bir arayüz oluşturmaktır.
 
 ## 1. Genel Stil ve Felsefe
 
@@ -18,7 +18,7 @@ Bu doküman, Tablio uygulamasının v1 sürümü için hedeflenen kullanıcı ar
 ### Tipografi
 
 - **Font Ailesi:** `Inter` veya benzeri modern bir `sans-serif` font.
-- **Ana Başlık (Tablio):** `28px`, Kalın (600 veya 700).
+- **Ana Başlık (TableFlow):** `28px`, Kalın (600 veya 700).
 - **Alt Başlık / Slogan:** `16px`, Normal (400), İkincil Metin Rengi.
 
 ### Boşluk Kullanımı ve Köşe Yuvarlaklığı
@@ -39,8 +39,8 @@ Uygulama, **tek sayfalı (Single Page Application)** bir yapıya sahip olacaktı
 
 - Sayfanın üst kısmında, ortalanmış şekilde yer alır.
 - **Elementler:**
-  - Basit, ikonik Tablio logosu.
-  - "Tablio" uygulama adı.
+  - Basit, ikonik TableFlow logosu.
+  - "TableFlow" uygulama adı.
 
 ### 3.2. Ana Bileşen (İşlem Alanı)
 

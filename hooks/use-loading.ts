@@ -1,5 +1,5 @@
 import { useState, useCallback } from "react";
-import type { LoadingState } from "@/types/tablio";
+import type { LoadingState } from "@/types/tableflow";
 
 /**
  * Custom hook for managing unified loading state
@@ -9,23 +9,26 @@ export function useLoading() {
     isLoading: false,
     progress: 0,
     message: "",
-    type: 'idle'
+    type: "idle",
   });
 
-  const startLoading = useCallback((type: 'processing' | 'downloading', message?: string) => {
-    setLoadingState({
-      isLoading: true,
-      progress: 0,
-      message: message || "",
-      type
-    });
-  }, []);
+  const startLoading = useCallback(
+    (type: "processing" | "downloading", message?: string) => {
+      setLoadingState({
+        isLoading: true,
+        progress: 0,
+        message: message || "",
+        type,
+      });
+    },
+    []
+  );
 
   const updateProgress = useCallback((progress: number, message?: string) => {
-    setLoadingState(prev => ({
+    setLoadingState((prev) => ({
       ...prev,
       progress,
-      message: message || prev.message
+      message: message || prev.message,
     }));
   }, []);
 
@@ -34,15 +37,15 @@ export function useLoading() {
       isLoading: false,
       progress: 0,
       message: "",
-      type: 'idle'
+      type: "idle",
     });
   }, []);
 
   const resetProgress = useCallback(() => {
-    setLoadingState(prev => ({
+    setLoadingState((prev) => ({
       ...prev,
       progress: 0,
-      message: ""
+      message: "",
     }));
   }, []);
 
@@ -53,10 +56,10 @@ export function useLoading() {
     stopLoading,
     resetProgress,
     // Convenience getters
-    isProcessing: loadingState.type === 'processing',
-    isDownloading: loadingState.type === 'downloading',
+    isProcessing: loadingState.type === "processing",
+    isDownloading: loadingState.type === "downloading",
     isLoading: loadingState.isLoading,
     progress: loadingState.progress,
-    message: loadingState.message
+    message: loadingState.message,
   };
 }

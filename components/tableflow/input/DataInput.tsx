@@ -8,7 +8,7 @@ interface DataInputProps {
 export function DataInput({ onPaste }: DataInputProps) {
   return (
     <Card
-      className="w-full max-w-2xl p-6 sm:p-12 tablio-paste-area cursor-pointer transition-all duration-300 transform hover:scale-[1.02] border-2 border-dashed border-border hover:border-primary/50 hover:bg-primary/5 hover:shadow-lg"
+      className="w-full max-w-2xl p-6 sm:p-12 tableflow-paste-area cursor-pointer transition-all duration-300 transform hover:scale-[1.02] border-2 border-dashed border-border hover:border-primary/50 hover:bg-primary/5 hover:shadow-lg"
       onClick={onPaste}
     >
       <div className="text-center space-y-4">

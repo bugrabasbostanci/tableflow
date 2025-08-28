@@ -1,6 +1,6 @@
 import { useState, useCallback } from "react";
 import { toast } from "sonner";
-import type { TableData, EditingCell } from "@/types/tablio";
+import type { TableData, EditingCell } from "@/types/tableflow";
 import {
   addRowToTable,
   removeRowFromTable,
@@ -14,7 +14,10 @@ interface UseTableEditorProps {
   onTableChange: (data: TableData) => void;
 }
 
-export function useTableEditor({ tableData, onTableChange }: UseTableEditorProps) {
+export function useTableEditor({
+  tableData,
+  onTableChange,
+}: UseTableEditorProps) {
   const [editingCell, setEditingCell] = useState<EditingCell | null>(null);
   const [editValue, setEditValue] = useState("");
 
@@ -80,7 +83,9 @@ export function useTableEditor({ tableData, onTableChange }: UseTableEditorProps
       const updatedTableData = removeRowFromTable(tableData, rowIndex);
       if (updatedTableData) {
         onTableChange(updatedTableData);
-        toast.success("Row deleted: Selected row has been removed from the table.");
+        toast.success(
+          "Row deleted: Selected row has been removed from the table."
+        );
       }
     },
     [tableData, onTableChange]
@@ -101,7 +106,9 @@ export function useTableEditor({ tableData, onTableChange }: UseTableEditorProps
       const updatedTableData = removeColumnFromTable(tableData, colIndex);
       if (updatedTableData) {
         onTableChange(updatedTableData);
-        toast.success("Column deleted: Selected column has been removed from the table.");
+        toast.success(
+          "Column deleted: Selected column has been removed from the table."
+        );
       }
     },
     [tableData, onTableChange]

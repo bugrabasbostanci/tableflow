@@ -1,11 +1,11 @@
 import type { Metadata } from "next";
-import { AppHeader } from "@/components/tablio/layout/AppHeader";
-import { AppFooter } from "@/components/tablio/layout/AppFooter";
+import { AppHeader } from "@/components/tableflow/layout/AppHeader";
+import { AppFooter } from "@/components/tableflow/layout/AppFooter";
 import { Card } from "@/components/ui/card";
 
 export const metadata: Metadata = {
-  title: "Terms of Service - Tablio",
-  description: "Terms of Service for Tablio - Table Converter application",
+  title: "Terms of Service - TableFlow",
+  description: "Terms of Service for TableFlow - Table Converter application",
 };
 
 export default function TermsOfService() {
@@ -28,7 +28,7 @@ export default function TermsOfService() {
                 1. Acceptance of Terms
               </h2>
               <p className="text-muted-foreground">
-                By accessing and using Tablio (&quot;the Service&quot;), you
+                By accessing and using TableFlow (&quot;the Service&quot;), you
                 accept and agree to be bound by the terms and provisions of this
                 agreement. If you do not agree to these terms, you should not
                 use this service.
@@ -41,8 +41,8 @@ export default function TermsOfService() {
               </h2>
               <div className="space-y-4 text-muted-foreground">
                 <p>
-                  Tablio is a web-based table conversion tool that allows users
-                  to:
+                  TableFlow is a web-based table conversion tool that allows
+                  users to:
                 </p>
                 <ul className="list-disc pl-6 space-y-2">
                   <li>
@@ -187,7 +187,7 @@ export default function TermsOfService() {
                 </h3>
                 <p>
                   The Service, including its design, functionality, and code, is
-                  owned by Tablio and is protected by intellectual property
+                  owned by TableFlow and is protected by intellectual property
                   laws.
                 </p>
 
@@ -322,7 +322,7 @@ export default function TermsOfService() {
                     <strong>Email:</strong> support@tablio.app
                   </li>
                   <li>
-                    <strong>Website:</strong> https://tablio-deu.pages.dev
+                    <strong>Website:</strong> https://tableflow-3bm.pages.dev
                   </li>
                   <li>
                     <strong>GitHub:</strong>{" "}

@@ -1,11 +1,11 @@
 import type { Metadata } from "next";
-import { AppHeader } from "@/components/tablio/layout/AppHeader";
-import { AppFooter } from "@/components/tablio/layout/AppFooter";
+import { AppHeader } from "@/components/tableflow/layout/AppHeader";
+import { AppFooter } from "@/components/tableflow/layout/AppFooter";
 import { Card } from "@/components/ui/card";
 
 export const metadata: Metadata = {
-  title: "Privacy Policy - Tablio",
-  description: "Privacy Policy for Tablio - Table Converter application",
+  title: "Privacy Policy - TableFlow",
+  description: "Privacy Policy for TableFlow - Table Converter application",
 };
 
 export default function PrivacyPolicy() {
@@ -219,7 +219,7 @@ export default function PrivacyPolicy() {
                   6.2 Opt-Out Options
                 </h3>
                 <p>
-                  You can use Tablio without Google integration by choosing
+                  You can use TableFlow without Google integration by choosing
                   local download options instead of Google Sheets export.
                 </p>
               </div>
@@ -230,7 +230,7 @@ export default function PrivacyPolicy() {
                 7. Children&apos;s Privacy
               </h2>
               <p className="text-muted-foreground">
-                Tablio is not intended for use by children under 13 years of
+                TableFlow is not intended for use by children under 13 years of
                 age. We do not knowingly collect personal information from
                 children under 13.
               </p>
@@ -259,7 +259,7 @@ export default function PrivacyPolicy() {
                     <strong>Email:</strong> support@tablio.app
                   </li>
                   <li>
-                    <strong>Website:</strong> https://tablio-deu.pages.dev
+                    <strong>Website:</strong> https://tableflow-3bm.pages.dev
                   </li>
                   <li>
                     <strong>GitHub:</strong>{" "}
