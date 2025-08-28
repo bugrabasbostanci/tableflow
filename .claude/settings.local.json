@@ -6,7 +6,8 @@
       "Bash(npm run lint)",
       "Bash(git add:*)",
       "Bash(npx tsc:*)",
-      "Bash(taskkill:*)"
+      "Bash(taskkill:*)",
+      "Bash(rmdir:*)"
     ]
   }
 }

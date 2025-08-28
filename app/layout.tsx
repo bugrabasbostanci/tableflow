@@ -54,7 +54,7 @@ export const metadata: Metadata = {
     description: "Convert copied table data to Excel, CSV, JSON, and XML formats instantly. Free online table converter with Google Sheets integration.",
     images: [
       {
-        url: "/tableflow-logo.png",
+        url: "/logo-512x512.png",
         width: 1200,
         height: 630,
         alt: "TableFlow - Free Online Table Converter",
@@ -65,7 +65,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "TableFlow - Free Online Table Converter",
     description: "Convert copied table data to Excel, CSV, JSON formats instantly. Free online tool with Google Sheets integration.",
-    images: ["/tableflow-logo.png"],
+    images: ["/logo-512x512.png"],
     creator: "@tableflow_app",
   },
   alternates: {
